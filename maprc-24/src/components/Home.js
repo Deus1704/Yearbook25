@@ -1,0 +1,75 @@
+import React, { useState } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import './Home.css'; 
+import logo from '../Logo.svg';
+import someone from '../someone.svg';
+
+const profiles = [
+  { name: "John Doe", designation: "Software Engineer", image:someone },
+  { name: "Jane Smith", designation: "Product Manager", image: someone },
+  { name: "Alice Johnson", designation: "Designer", image: someone },
+  { name: "Bob Brown", designation: "Developer", image: someone }
+  // Add more profiles as needed
+];
+
+const Home = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredProfiles = profiles.filter(profile =>
+    profile.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="app-container">
+      <header className="d-flex justify-content-between align-items-center p-3">
+        <img src={logo} alt="Logo" className="logo" />
+        <h1>Yearbook 2024</h1>
+        <button className="btn btn-outline-light"><i className="fas fa-plus"></i></button>
+      </header>
+      <div className="search-bar d-flex justify-content-center my-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search here..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      <div className="profile-section d-flex justify-content-center my-3">
+        <div className="profile-pic add-profile">
+          <i className="fas fa-plus"></i>
+        </div>
+        {filteredProfiles.map((profile, index) => (
+          <div className="profile-pic" key={index}>
+            <img src={profile.image} alt={`Profile ${index + 1}`} />
+          </div>
+        ))}
+      </div>
+      <div className="container">
+        <div className="row">
+          {filteredProfiles.map((profile, index) => (
+            <div className="col-6 col-md-3 mb-3" key={index}>
+              <div className="card">
+                <img src={profile.image} className="card-img-top" alt={profile.name} />
+                <div className="card-body text-center">
+                  <h5 className="card-title">{profile.name}</h5>
+                  <p className="card-text">{profile.designation}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <footer className="footer">
+        <button className="footer-btn"><i className="fas fa-home"></i></button>
+        <button className="footer-btn"><i className="fas fa-sync-alt"></i></button>
+        <button className="footer-btn"><i className="fas fa-plus"></i></button>
+        <button className="footer-btn"><i className="fas fa-list"></i></button>
+        <button className="footer-btn"><i className="fas fa-users"></i></button>
+      </footer>
+    </div>
+  );
+};
+
+export default Home;
