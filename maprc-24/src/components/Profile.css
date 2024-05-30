@@ -1,0 +1,86 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  .profile-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(180deg, #e0f7fa 0%, #fff3e0 100%);
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  .back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: black;
+    text-decoration: none;
+    font-size: 24px;
+  }
+  
+  .profile-card {
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .profile-image {
+    width: 100%;
+    height: auto;
+  }
+  
+  .profile-details {
+    padding: 20px;
+  }
+  
+  .profile-details h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+  }
+  
+  .profile-designation {
+    font-size: 18px;
+    color: #666;
+    margin: 10px 0;
+  }
+  
+  .profile-description {
+    font-size: 16px;
+    color: #666;
+  }
+  
+  @media (max-width: 768px) {
+    .profile-container {
+      padding: 10px;
+    }
+  
+    .profile-card {
+      margin-top: 60px; /* To ensure the back button is visible */
+    }
+  
+    .profile-details {
+      padding: 15px;
+    }
+  
+    .profile-details h1 {
+      font-size: 20px;
+    }
+  
+    .profile-designation {
+      font-size: 16px;
+    }
+  
+    .profile-description {
+      font-size: 14px;
+    }
+  }
+  

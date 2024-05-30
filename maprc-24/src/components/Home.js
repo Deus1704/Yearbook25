@@ -2,16 +2,12 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Home.css';
+import { Link } from 'react-router-dom';
 import logo from '../Logo.svg';
-import someone from '../someone.svg';
+// import someone from '../someone.svg';
+import profiles from './Profiles';
 
-const profiles = [
-  { name: "John Doe", designation: "Software Engineer", image: someone },
-  { name: "Jane Smith", designation: "Product Manager", image: someone },
-  { name: "Alice Johnson", designation: "Designer", image: someone },
-  { name: "Bob Brown", designation: "Developer", image: someone }
-  // Add more profiles as needed
-];
+
 
 const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,13 +47,15 @@ const Home = () => {
         <div className="row">
           {filteredProfiles.map((profile, index) => (
             <div className="col-6 col-md-3 mb-3" key={index}>
-              <div className="card">
-                <img src={profile.image} className="card-img-top" alt={profile.name} />
-                <div className="card-body text-center">
-                  <h5 className="card-title">{profile.name}</h5>
-                  <p className="card-text">{profile.designation}</p>
+              <Link to={`/profile/${profile.id}`} className="text-decoration-none">
+                <div className="card">
+                  <img src={profile.image} className="card-img-top" alt={profile.name} />
+                  <div className="card-body text-center">
+                    <h5 className="card-title">{profile.name}</h5>
+                    <p className="card-text">{profile.designation}</p>
+                  </div>
                 </div>
-              </div>
+              </Link>
             </div>
           ))}
         </div>
