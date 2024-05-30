@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import './Home.css'; 
+import './Home.css';
 import logo from '../Logo.svg';
 import someone from '../someone.svg';
 
 const profiles = [
-  { name: "John Doe", designation: "Software Engineer", image:someone },
+  { name: "John Doe", designation: "Software Engineer", image: someone },
   { name: "Jane Smith", designation: "Product Manager", image: someone },
   { name: "Alice Johnson", designation: "Designer", image: someone },
   { name: "Bob Brown", designation: "Developer", image: someone }
@@ -22,11 +22,12 @@ const Home = () => {
 
   return (
     <div className="app-container">
-      <header className="d-flex justify-content-between align-items-center p-3">
-        <img src={logo} alt="Logo" className="logo" />
+      <header className="header d-flex justify-content-between align-items-center p-3">
+        <img src={logo} alt="Logo" className="logo" style={{filter:'invert(1)'}}/>
         <h1>Yearbook 2024</h1>
-        <button className="btn btn-outline-light"><i className="fas fa-plus"></i></button>
+        <button className="btn btn-outline-light"style={{filter:'invert(1)', borderRadius:'100%'}}><i className="fas fa-plus"></i></button>
       </header>
+
       <div className="search-bar d-flex justify-content-center my-3">
         <input
           type="text"
@@ -61,7 +62,8 @@ const Home = () => {
           ))}
         </div>
       </div>
-      <footer className="footer">
+
+      <footer className="footer d-flex justify-content-around align-items-center p-2" style={{position:'fixed', width:'100%', top:'93vh', zIndex:'10'}}>
         <button className="footer-btn"><i className="fas fa-home"></i></button>
         <button className="footer-btn"><i className="fas fa-sync-alt"></i></button>
         <button className="footer-btn"><i className="fas fa-plus"></i></button>
