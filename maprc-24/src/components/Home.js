@@ -33,7 +33,7 @@ const Home = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      <div className="profile-section d-flex justify-content-center my-3">
+      {/* <div className="profile-section d-flex justify-content-center my-3">
         <div className="profile-pic add-profile">
           <i className="fas fa-plus"></i>
         </div>
@@ -42,13 +42,13 @@ const Home = () => {
             <img src={profile.image} alt={`Profile ${index + 1}`} />
           </div>
         ))}
-      </div>
+      </div> */}
       <div className="container">
         <div className="row">
           {filteredProfiles.map((profile, index) => (
             <div className="col-6 col-md-3 mb-3" key={index}>
               <Link to={`/profile/${profile.id}`} className="text-decoration-none">
-                <div className="card">
+                <div className="card shadow">
                   <img src={profile.image} className="card-img-top" alt={profile.name} />
                   <div className="card-body text-center">
                     <h5 className="card-title">{profile.name}</h5>
@@ -61,7 +61,7 @@ const Home = () => {
         </div>
       </div>
 
-      <footer className="footer d-flex justify-content-around align-items-center p-2" style={{position:'fixed', width:'100%', top:'93vh', zIndex:'10'}}>
+      <footer className="footer d-flex justify-content-around align-items-center p-2" style={{position:'fixed', width:'100%', top:'93vh', zIndex:'10', borderTopLeftRadius:'10px', borderTopRightRadius:'10px'}}>
         <button className="footer-btn"><i className="fas fa-home"></i></button>
         <button className="footer-btn"><i className="fas fa-sync-alt"></i></button>
         <button className="footer-btn"><i className="fas fa-plus"></i></button>
