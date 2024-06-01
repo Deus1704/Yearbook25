@@ -1,4 +1,4 @@
-import someone from '../someone.svg';
+import someone from '../assets/someone.svg';
 
 const profiles = [
   { id: 1, name: "John Doe", designation: "Software Engineer", image: someone, description: "The tumultuous tide of complex emotions swelled and receded within me as I steadfastly clung to the tenets of authenticity, navigating the ever-shifting currents of reality." },

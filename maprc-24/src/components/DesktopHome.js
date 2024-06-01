@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Row, Col, Navbar, Nav } from 'react-bootstrap';
 import './DesktopHome.css';
-import logo from '../Logo.svg';
+import logo from '../assets/Logo.svg';
 import profiles from './Profiles'; // Make sure the path is correct
 
 const DesktopHome = () => {

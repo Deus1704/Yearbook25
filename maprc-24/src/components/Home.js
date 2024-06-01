@@ -3,8 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Home.css';
 import { Link } from 'react-router-dom';
-import logo from '../Logo.svg';
-// import someone from '../someone.svg';
+import logo from '../assets/Logo.svg';
 import profiles from './Profiles';
 
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Team.css';
-import logo from '../Logo.svg';
+import logo from '../assets/Logo.svg';
 import profiles from './Profiles';
 
 

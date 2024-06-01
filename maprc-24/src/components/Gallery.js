@@ -1,7 +1,7 @@
 import React from 'react';
 import './Gallery.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import someone from './someone.png';
+import someone from '../assets/someone.png';
 import { Link } from 'react-router-dom';
 
 const Gallery = () => {
