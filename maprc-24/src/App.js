@@ -5,6 +5,7 @@ import Home from './components/Home';
 import Login from './components/login';
 import Profile from './components/Profile';
 import Gallery from './components/Gallery';
+import Team from './components/Team';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile/:id" element={<Profile />} />
         <Route path="/gallery" element={<Gallery />} />
+        <Route path="/team" element={<Team />} />
       </Routes>
     </Router>
   );

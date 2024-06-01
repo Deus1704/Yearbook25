@@ -17,6 +17,7 @@ const Home = () => {
   );
 
   return (
+    <>
     <div className="app-container">
       <header className="header d-flex justify-content-between align-items-center p-3">
         <img src={logo} alt="Logo" className="logo" style={{filter:'invert(1)'}}/>
@@ -33,20 +34,12 @@ const Home = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      {/* <div className="profile-section d-flex justify-content-center my-3">
-        <div className="profile-pic add-profile">
-          <i className="fas fa-plus"></i>
-        </div>
-        {filteredProfiles.map((profile, index) => (
-          <div className="profile-pic" key={index}>
-            <img src={profile.image} alt={`Profile ${index + 1}`} />
-          </div>
-        ))}
-      </div> */}
+      </div>
+      <div >
       <div className="container">
-        <div className="row">
+        <div className="" id='needed'>
           {filteredProfiles.map((profile, index) => (
-            <div className="col-6 col-md-3 mb-3" key={index}>
+            <div className=" mb-3" key={index}>
               <Link to={`/profile/${profile.id}`} className="text-decoration-none">
                 <div className="card shadow">
                   <img src={profile.image} className="card-img-top" alt={profile.name} />
@@ -69,6 +62,7 @@ const Home = () => {
         <button className="footer-btn"><i className="fas fa-users"></i></button>
       </footer>
     </div>
+    </>
   );
 };
 
