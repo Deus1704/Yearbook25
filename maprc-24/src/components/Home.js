@@ -35,7 +35,7 @@ const Home = () => {
       </div>
       </div>
       <div >
-      <div className="container">
+      {/* <div className="container">
         <div className="" id='needed'>
           {filteredProfiles.map((profile, index) => (
             <div className=" mb-3" key={index}>
@@ -45,6 +45,23 @@ const Home = () => {
                   <div className="card-body text-center">
                     <h5 className="card-title">{profile.name}</h5>
                     <p className="card-text">{profile.designation}</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div> */}
+      <div className="container">
+        <div className="row">
+          {filteredProfiles.map((profile, index) => (
+            <div className="col-6 col-md-3 mb-3" key={index}>
+              <Link to={`/profile/${profile.id}`} className="text-decoration-none">
+                <div className="card1">
+                  <img src={profile.image} className="card-img-top" alt={profile.name} />
+                  <div className="card-body text-center">
+                    <h5 id="card-title">{profile.name}</h5>
+                    <p id="card-text">{profile.designation}</p>
                   </div>
                 </div>
               </Link>

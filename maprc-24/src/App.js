@@ -7,6 +7,7 @@ import Profile from './components/Profile';
 import Gallery from './components/Gallery';
 import Team from './components/Team';
 import DesktopHome from './components/DesktopHome';
+import MyComponent from './components/try';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/team" element={<Team />} />
         <Route path="/desktop-home" element={<DesktopHome />} />
+        <Route path="/try" element={<MyComponent />} />
       </Routes>
     </Router>
   );

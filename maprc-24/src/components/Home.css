@@ -64,11 +64,13 @@ body {
   align-items: center;
 }
 
-.card {
-  border: none;
+.card1 {
+  border: 1px solid white;
   border-radius: 15px;
   overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
+
 
 .card-img-top {
   border-top-left-radius: 15px;
@@ -80,8 +82,16 @@ body {
   padding: 15px;
 }
 
-.card-title, .card-text {
+#card-title, #card-text {
   margin: 0;
+}
+#card-text {
+  font-size: 0.9rem;
+  color: black;
+}
+#card-title {
+  font-size: 1.2rem;
+  color: black;
 }
 
 .footer {

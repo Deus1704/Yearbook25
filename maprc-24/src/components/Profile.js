@@ -13,7 +13,7 @@ const Profile = () => {
 
   return (
     <div className="profile-container">
-      <Link to="/" className="back-button">
+      <Link to="/" className="back-button" style={{zIndex:'10'}}>
         <i className="fas fa-arrow-left"></i>
       </Link>
       <div className="profile-card">
