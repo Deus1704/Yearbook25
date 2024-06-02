@@ -9,6 +9,8 @@ import Team from './components/Team';
 import DesktopHome from './components/DesktopHome';
 import MyComponent from './components/try';
 import ProfilePage from './components/ProfilePage';
+import Message from './components/Message';
+import Confessions from './components/Confessions';
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
         <Route path="/desktop-home" element={<DesktopHome />} />
         <Route path="/try" element={<MyComponent />} />
         <Route path="/profile-page" element={<ProfilePage />} />
+        <Route path="/message" element={<Message />} />
+        <Route path="/confessions" element={<Confessions />} />
       </Routes>
     </Router>
   );
