@@ -1,0 +1,40 @@
+.profile-detail-content {
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .profile-detail-img {
+    width: 100%;
+    border-radius: 10px;
+  }
+  
+  .degree {
+    font-size: 1.2em;
+    color: #6c757d;
+  }
+  
+  .description {
+    margin: 20px 0;
+  }
+  
+  .comments {
+    margin: 20px 0;
+  }
+  
+  .comment {
+    background: #f0f0f0;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .message-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin-top: 10px;
+  }
+  

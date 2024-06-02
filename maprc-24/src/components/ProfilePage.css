@@ -1,0 +1,40 @@
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  .logo {
+    height: 40px;
+  }
+  
+  .profile-page1 {
+    display: flex;
+  }
+  
+  .profile-list {
+    background: #f0fff0;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+  
+  .profile-detail {
+    background: #e0ffec;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+  
+  .profile-card {
+    margin-bottom: 15px;
+  }
+  
+  .profile-img {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .search-bar {
+    margin-bottom: 20px;
+  }
+  
