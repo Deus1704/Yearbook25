@@ -3,15 +3,10 @@ import { Container, Row, Col, Navbar, Nav } from 'react-bootstrap';
 import './ProfilePage.css';
 import ProfileCard from './ProfileCard';
 import ProfileDetail from './ProfileDetail';
-import SearchBar from './SearchBar';
+
 import logo from '../assets/Logo.svg';
-// import profiles from './Profiles';
-import someone from '../assets/someone.png';
 const ProfilePage = () => {
-  const profiles = [
-    { name: 'Name', bio: 'bio...', image: someone },
-    // Add more profiles as needed
-  ];
+  
 
   return (
     <>
@@ -35,19 +30,17 @@ const ProfilePage = () => {
         </Container>
       </Navbar>
 
-      <Container className="profile-page1 pt-0 pl-0 pr-0 ml-0 mr-0" style={{width:'100%'}}>
+      <div className="profile-page1 pt-0 pl-0 pr-0 ml-0 mr-0" style={{width:'100%'}}>
         <Row>
-          <Col lg={2} className="profile-list">
-            <SearchBar />
-            {profiles.map((profile, index) => (
-              <ProfileCard key={index} profile={profile} />
-            ))}
+          <Col lg={3} className="profile-list">
+            
+              <ProfileCard />
           </Col>
-          <Col lg={10} className="profile-detail">
+          <Col lg={9} className="profile-detail">
             <ProfileDetail />
           </Col>
         </Row>
-      </Container>
+      </div>
     </>
   );
 };

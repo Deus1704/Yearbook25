@@ -12,15 +12,15 @@ const Profile = () => {
   }
 
   return (
-    <div className="profile-container">
-      <Link to="/" className="back-button" style={{zIndex:'10'}}>
+    <div className="profile-container1">
+      <Link to="/" className="back-button1" style={{zIndex:'10'}}>
         <i className="fas fa-arrow-left"></i>
       </Link>
-      <div className="profile-card">
-        <img src={profile.image} alt={profile.name} className="profile-image" />
-        <div className="profile-details">
+      <div className="profile-card1">
+        <img src={profile.image} alt={profile.name} className="profile-image1" />
+        <div className="profile-details1">
           <h1>{profile.name}</h1>
-          <p className="profile-designation"><i className="fas fa-graduation-cap"></i> {profile.designation}</p>
+          <p className="profile-designation1"><i className="fas fa-graduation-cap"></i> {profile.designation}</p>
           <p className="profile-description">{profile.description}</p>
         </div>
       </div>

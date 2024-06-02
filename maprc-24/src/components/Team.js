@@ -61,7 +61,7 @@ const Home = () => {
       <div className="container" id='desktop'>
         <div className="row" style={{justifyContent:'space-around'}}>
           {filteredProfiles.map((profile, index) => (
-            <div className="col-7 col-md-3 mb-3" key={index}>
+            <div className="col-7 col-md-2 mb-3" key={index}>
               {/* <Link to={`/profile/${profile.id}`} className="text-decoration-none"> */}
                 <div className="card">
                   <div className="first-content">
