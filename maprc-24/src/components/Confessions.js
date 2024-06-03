@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './Confessions.css';
 import { Link } from 'react-router-dom';
 import Navbardesk from './Navbar';
+
 const confessions = [
   {
     id: 1,
@@ -30,21 +31,39 @@ const confessions = [
 ];
 
 const Confessions = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+
+    return () => {
+      window.removeEventListener('resize', checkScreenSize);
+    };
+  }, []);
+
   return (
-    <div className="confessions-container">
-      <Link to="/" className="back-button">
-        <i className="fas fa-arrow-left"></i>
-      </Link>
-      <h2 className="confessions-title">Confessions</h2>
-      <div className="confessions-list">
-        {confessions.map((confession) => (
-          <div className="confession-item" key={confession.id}>
-            <p>{confession.message}</p>
-          </div>
-        ))}
+    <>
+    {!isMobile && <Navbardesk />}
+      <div className="confessions-container">
+        <Link to="/" className="back-button">
+          <i className="fas fa-arrow-left"></i>
+        </Link>
+        <h2 className="confessions-title">Confessions</h2>
+        <div className="confessions-list">
+          {confessions.map((confession) => (
+            <div className="confession-item" key={confession.id}>
+              <p>{confession.message}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <Navbardesk />
-    </div>
+    {isMobile && <Navbardesk />}
+    </>
   );
 };
 

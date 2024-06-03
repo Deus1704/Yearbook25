@@ -8,7 +8,6 @@ import Navbardesk from './Navbar';
 const ProfilePage = () => {
   return (
     <>
-      
       <Navbardesk />
       <div className="profile-page1 pt-0 pl-0 pr-0 ml-0 mr-0" style={{width:'100%'}}>
         <Row>
