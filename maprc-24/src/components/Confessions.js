@@ -1,7 +1,7 @@
 import React from 'react';
 import './Confessions.css';
 import { Link } from 'react-router-dom';
-
+import Navbardesk from './Navbar';
 const confessions = [
   {
     id: 1,
@@ -43,13 +43,7 @@ const Confessions = () => {
           </div>
         ))}
       </div>
-      <footer className="footer ml-0 pl-0">
-        <button className="footer-btn"><i className="fas fa-home"></i></button>
-        <button className="footer-btn"><i className="fas fa-sync-alt"></i></button>
-        <button className="footer-btn add-btn"><i className="fas fa-plus"></i></button>
-        <button className="footer-btn"><i className="fas fa-list"></i></button>
-        <button className="footer-btn"><i className="fas fa-users"></i></button>
-      </footer>
+      <Navbardesk />
     </div>
   );
 };

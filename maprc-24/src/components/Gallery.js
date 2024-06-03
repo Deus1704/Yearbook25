@@ -3,7 +3,7 @@ import './Gallery.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
 import profiles from './Profiles';
-
+import Navbardesk from './Navbar';
 const Gallery = () => {
   return (
     <>
@@ -20,13 +20,7 @@ const Gallery = () => {
           ))}
         </div>
       </div>
-      <footer className="footer">
-        <button className="footer-btn"><i className="fas fa-home"></i></button>
-        <button className="footer-btn"><i className="fas fa-sync-alt"></i></button>
-        <button className="footer-btn"><i className="fas fa-plus"></i></button>
-        <button className="footer-btn"><i className="fas fa-list"></i></button>
-        <button className="footer-btn"><i className="fas fa-users"></i></button>
-      </footer>
+      <Navbardesk />
     </>
   );
 };

@@ -5,6 +5,7 @@ import './Home.css';
 import { Link } from 'react-router-dom';
 import logo from '../assets/Logo.svg';
 import profiles from './Profiles';
+import Navbardesk from './Navbar';
 
 
 
@@ -70,13 +71,14 @@ const Home = () => {
         </div>
       </div>
 
-      <footer className="footer d-flex justify-content-around align-items-center p-2" style={{position:'fixed', width:'100%', top:'93vh', zIndex:'10', borderTopLeftRadius:'10px', borderTopRightRadius:'10px'}}>
+      {/* <footer className="footer d-flex justify-content-around align-items-center p-2" style={{position:'sticky', width:'100%', top:'', bottom:'', zIndex:'10', borderTopLeftRadius:'10px', borderTopRightRadius:'10px'}}>
         <button className="footer-btn"><i className="fas fa-home"></i></button>
         <button className="footer-btn"><i className="fas fa-sync-alt"></i></button>
         <button className="footer-btn"><i className="fas fa-plus"></i></button>
         <button className="footer-btn"><i className="fas fa-list"></i></button>
         <button className="footer-btn"><i className="fas fa-users"></i></button>
-      </footer>
+      </footer> */}
+      <Navbardesk />
     </div>
     </>
   );

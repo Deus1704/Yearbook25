@@ -4,7 +4,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Team.css';
 import logo from '../assets/Logo.svg';
 import profiles from './Profiles';
-
+import Navbardesk from './Navbar';
 
 
 const Home = () => {
@@ -16,9 +16,10 @@ const Home = () => {
 
   return (
     <>
+    <Navbardesk />
     <div className="app-container">
       <header className="header d-flex  align-items-center p-3">
-        <img src={logo} alt="Logo" className="logo" style={{filter:'invert(1)'}}/>
+        {/* <img src={logo} alt="Logo" className="logo" style={{filter:'invert(1)'}}/> */}
         <h1 style={{textAlign:'center', width:'100%'}}>Meet the Team</h1>
         {/* <button className="btn btn-outline-light"style={{filter:'invert(1)', borderRadius:'100%'}}><i className="fas fa-plus"></i></button> */}
       </header>
@@ -152,6 +153,7 @@ const Home = () => {
         <button className="footer-btn"><i className="fas fa-list"></i></button>
         <button className="footer-btn"><i className="fas fa-users"></i></button>
       </footer> */}
+      
     </div>
     </>
   );

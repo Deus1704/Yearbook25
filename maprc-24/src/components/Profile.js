@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import profiles from './Profiles'; 
 import './Profile.css';
-
+import Navbardesk from './Navbar';
 const Profile = () => {
   const { id } = useParams();
   const profile = profiles.find(profile => profile.id === parseInt(id));
@@ -12,6 +12,7 @@ const Profile = () => {
   }
 
   return (
+    <>
     <div className="profile-container1">
       <Link to="/" className="back-button1" style={{zIndex:'10'}}>
         <i className="fas fa-arrow-left"></i>
@@ -24,7 +25,10 @@ const Profile = () => {
           <p className="profile-description">{profile.description}</p>
         </div>
       </div>
+      
     </div>
+    <Navbardesk />
+    </>
   );
 };
 

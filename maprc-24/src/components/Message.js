@@ -2,9 +2,10 @@ import React from 'react';
 import './Message.css';
 import { Link } from 'react-router-dom';
 import profiles from './Profiles'; // Assuming profiles is an array of messages
-
+import Navbardesk from './Navbar';
 const Message = () => {
   return (
+    <>
     <div className="profile-container">
       <Link to="/" className="back-button">
         <i className="fas fa-arrow-left"></i> Back
@@ -21,8 +22,11 @@ const Message = () => {
           </div>
         ))}
       </div>
-      <input type="text" placeholder="Write your message..." className="message-input" />
+      
+      <input type="text" placeholder="Write your message..." style={{position:'sticky', top:'', bottom:'', zIndex:'9'}} className="message-input" />
     </div>
+    <Navbardesk />
+  </>
   );
 };
 

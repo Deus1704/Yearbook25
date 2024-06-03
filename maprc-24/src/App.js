@@ -16,17 +16,17 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/profile/:id" element={<Profile />} />
+        <Route path="/" element={<Home />} />                           //merge both destop and mobile
+        <Route path="/login" element={<Login />} />                     //login with google
+        <Route path="/profile/:id" element={<Profile />} />             //merge both destop and mobile
         <Route path="/profileD/:id" element={<ProfilePage />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/team" element={<Team />} />
-        <Route path="/desktop-home" element={<DesktopHome />} />
+        <Route path="/gallery" element={<Gallery />} />                 //navbar for desktop
+        <Route path="/team" element={<Team />} />                       //team for mobile and navbar for both
+        <Route path="/desktop-home" element={<DesktopHome />} />        //desktop memory
         <Route path="/try" element={<MyComponent />} />
-        <Route path="/profile-page" element={<ProfilePage />} />
-        <Route path="/message" element={<Message />} />
-        <Route path="/confessions" element={<Confessions />} />
+        <Route path="/profile-page" element={<ProfilePage />} />        //Direct navigate to profileD
+        <Route path="/message" element={<Message />} />                 //Navbar and resposive for desktop
+        <Route path="/confessions" element={<Confessions />} />         //Navbar and resposive for desktop
       </Routes>
     </Router>
   );
