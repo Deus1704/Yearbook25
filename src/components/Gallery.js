@@ -2,24 +2,40 @@ import React, { useState, useEffect } from 'react';
 import './Gallery.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
-import profiles from './Profiles';
+import { getProfiles, getProfileImageUrl } from '../services/api';
 import Navbardesk from './Navbar';
 
 const Gallery = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
 
+    const fetchProfiles = async () => {
+      try {
+        const data = await getProfiles();
+        setProfiles(data);
+      } catch (error) {
+        console.error('Error fetching profiles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     checkScreenSize();
+    fetchProfiles();
     window.addEventListener('resize', checkScreenSize);
 
     return () => {
       window.removeEventListener('resize', checkScreenSize);
     };
   }, []);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <>
@@ -32,7 +48,11 @@ const Gallery = () => {
         <div className="gallery-grid">
           {profiles.map((profile) => (
             <div className="gallery-item" key={profile.id}>
-              <img src={profile.image} alt={profile.name} className="gallery-image" />
+              <img 
+                src={getProfileImageUrl(profile.id)} 
+                alt={profile.name} 
+                className="gallery-image" 
+              />
             </div>
           ))}
         </div>

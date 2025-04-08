@@ -6,11 +6,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/Logo.svg';
 import profiles from './Profiles';
 import Navbardesk from './Navbar';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const filteredProfiles = profiles.filter(profile =>
     profile.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -24,7 +26,11 @@ const Home = () => {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
 
-    // Navigate to profileD/1 if the screen size is larger than 768px
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+
     if (window.innerWidth > 768) {
       navigate('/profileD/1');
     }
@@ -32,56 +38,52 @@ const Home = () => {
     return () => {
       window.removeEventListener('resize', checkScreenSize);
     };
-  }, [navigate]);
+  }, [navigate, currentUser]);
 
   return (
     <>
       {isMobile ? (
-        <div>
-          <div className="app-container">
-            <header className="header d-flex justify-content-between align-items-center p-3">
-              <img src={logo} alt="Logo" className="logo" style={{ filter: 'invert(1)' }} />
-              <h1>Yearbook 2024</h1>
-              <button className="btn btn-outline-light" style={{ filter: 'invert(1)', borderRadius: '100%' }}>
-                <i className="fas fa-plus"></i>
-              </button>
-            </header>
+        <div className="app-container">
+          <header className="header d-flex justify-content-between align-items-center">
+            <img src={logo} alt="Logo" className="logo" style={{ filter: 'invert(1)' }} />
+            <h1>Yearbook 2024</h1>
+            <Link to="/build-profile" className="btn btn-outline-light" style={{ filter: 'invert(1)', borderRadius: '100%' }}>
+              <i className="fas fa-plus"></i>
+            </Link>
+          </header>
 
-            <div className="search-bar d-flex justify-content-center my-3">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search here..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+          <div className="search-bar">
+            <input
+              type="text"
+              placeholder="Search here..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <div>
-            <div className="container">
-              <div className="row">
-                {filteredProfiles.map((profile, index) => (
-                  <div className="col-6 col-md-3 mb-3" key={index}>
-                    <Link to={`/profile/${profile.id}`} className="text-decoration-none">
-                      <div className="card1">
-                        <img src={profile.image} className="card-img-top" alt={profile.name} />
-                        <div className="card-body text-center">
-                          <h5 id="card-title">{profile.name}</h5>
-                          <p id="card-text">{profile.designation}</p>
-                        </div>
+
+          <div className="container">
+            <div className="row">
+              {filteredProfiles.map((profile) => (
+                <div className="col-6" key={profile.id}>
+                  <Link to={`/profile/${profile.id}`} className="text-decoration-none">
+                    <div className="card1">
+                      <img src={profile.image} className="card-img-top" alt={profile.name} />
+                      <div className="card-body">
+                        <h5 id="card-title">{profile.name}</h5>
+                        <p id="card-text">{profile.designation}</p>
                       </div>
-                    </Link>
-                  </div>
-                ))}
-              </div>
+                    </div>
+                  </Link>
+                </div>
+              ))}
             </div>
-            <Navbardesk />
           </div>
+
+          <footer className="footer">
+            <Navbardesk />
+          </footer>
         </div>
-      ) : (
-        // Desktop view redirection handled in useEffect
-        null
-      )}
+      ) : null}
     </>
   );
 };

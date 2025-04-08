@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Navbar, Nav } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Container, Navbar, Nav, Button } from 'react-bootstrap';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/Logo.svg';
-import './Navbardesk.css'; 
+import './Navbardesk.css';
+import { auth } from '../firebaseConfig';
+import { signOut } from 'firebase/auth';
+import { useAuth } from '../context/AuthContext';
 
 const Navbardesk = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { currentUser } = useAuth();
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -20,37 +27,127 @@ const Navbardesk = () => {
     };
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem('user');
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Helper function to check if a path is active
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/' || location.pathname.startsWith('/profileD');
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <>
       {isMobile ? (
-        <footer className="footer d-flex justify-content-around align-items-center p-2" style={{position:'sticky', width:'100%', top:'', bottom:'0', zIndex:'10', borderTopLeftRadius:'10px', borderTopRightRadius:'10px'}}>
-          <Link to="/" className="footer-btn"><i className="fas fa-home"></i></Link>
-        <Link to="/gallery" className="footer-btn"><i className="fas fa-sync-alt"></i></Link>
-        <Link to="/confessions" className="footer-btn"><i className="fas fa-plus"></i></Link>
-        <Link to="/message" className="footer-btn"><i className="fas fa-list"></i></Link>
-        <Link to="/team" className="footer-btn"><i className="fas fa-users"></i></Link>
+        <footer className="mobile-footer">
+          <Link to="/" className={`footer-btn ${isActive('/') ? 'active' : ''}`}>
+            <i className="fas fa-home"></i>
+          </Link>
+          <Link to="/gallery" className={`footer-btn ${isActive('/gallery') ? 'active' : ''}`}>
+            <i className="fas fa-images"></i>
+          </Link>
+          <Link to="/build-profile" className={`footer-btn ${isActive('/build-profile') ? 'active' : ''}`}>
+            <i className="fas fa-plus-circle"></i>
+          </Link>
+          <Link to="/message" className={`footer-btn ${isActive('/message') ? 'active' : ''}`}>
+            <i className="fas fa-comment-alt"></i>
+          </Link>
+          <Link to="/team" className={`footer-btn ${isActive('/team') ? 'active' : ''}`}>
+            <i className="fas fa-users"></i>
+          </Link>
         </footer>
       ) : (
-        <Navbar bg="light" expand="lg">
+        <Navbar bg="light" expand="lg" fixed="top" expanded={expanded} className="desktop-navbar">
           <Container>
-            <img src={logo} alt="Logo" className="logo" style={{ filter: 'invert(1)' }} />
-            <Navbar.Brand href="/">Yearbook 2024</Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Link to="/" className="navbar-brand-link">
+              <img src={logo} alt="Logo" className="logo me-2" />
+              <Navbar.Brand>Yearbook 2024</Navbar.Brand>
+            </Link>
+            <Navbar.Toggle
+              aria-controls="basic-navbar-nav"
+              onClick={() => setExpanded(expanded ? false : "expanded")}
+            />
             <Navbar.Collapse id="basic-navbar-nav">
               <Nav className="me-auto">
-                <Nav.Link href="/">Profiles</Nav.Link>
-                <Nav.Link href="/gallery">Memory Lane</Nav.Link>
-                <Nav.Link href="/message">Messages</Nav.Link>
-                <Nav.Link href="/confessions">Confessions</Nav.Link>
-                <Nav.Link href="/team">Team</Nav.Link>
+                <Nav.Link
+                  as={Link}
+                  to="/"
+                  className={isActive('/') ? 'active' : ''}
+                  onClick={() => setExpanded(false)}
+                >
+                  Profiles
+                </Nav.Link>
+                <Nav.Link
+                  as={Link}
+                  to="/gallery"
+                  className={isActive('/gallery') ? 'active' : ''}
+                  onClick={() => setExpanded(false)}
+                >
+                  Memory Lane
+                </Nav.Link>
+                <Nav.Link
+                  as={Link}
+                  to="/message"
+                  className={isActive('/message') ? 'active' : ''}
+                  onClick={() => setExpanded(false)}
+                >
+                  Messages
+                </Nav.Link>
+                <Nav.Link
+                  as={Link}
+                  to="/confessions"
+                  className={isActive('/confessions') ? 'active' : ''}
+                  onClick={() => setExpanded(false)}
+                >
+                  Confessions
+                </Nav.Link>
+                <Nav.Link
+                  as={Link}
+                  to="/team"
+                  className={isActive('/team') ? 'active' : ''}
+                  onClick={() => setExpanded(false)}
+                >
+                  Team
+                </Nav.Link>
               </Nav>
               <Nav>
-                <Nav.Link href="#build-your-profile">Build Your Profile</Nav.Link>
+                {currentUser && (
+                  <>
+                    <Nav.Link
+                      as={Link}
+                      to="/build-profile"
+                      className={`build-profile-btn ${isActive('/build-profile') ? 'active' : ''}`}
+                      onClick={() => setExpanded(false)}
+                    >
+                      <i className="fas fa-plus-circle me-1"></i> Build Your Profile
+                    </Nav.Link>
+                    <Button
+                      variant="outline-danger"
+                      onClick={() => {
+                        setExpanded(false);
+                        handleLogout();
+                      }}
+                      className="ms-2 logout-btn"
+                    >
+                      <i className="fas fa-sign-out-alt me-1"></i> Logout
+                    </Button>
+                  </>
+                )}
               </Nav>
             </Navbar.Collapse>
           </Container>
         </Navbar>
       )}
+      {!isMobile && <div className="navbar-spacer"></div>}
     </>
   );
 };

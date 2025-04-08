@@ -1,31 +1,123 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './ProfileDetail.css';
-import someone from '../assets/someone.png';
-import profiles from './Profiles'; 
 import { useParams } from 'react-router-dom';
+import { getProfile, addComment, getProfileImageUrl } from '../services/api';
+import { Spinner, Alert, Button } from 'react-bootstrap';
+
 const ProfileDetail = () => {
   const { id } = useParams();
-  const profile = profiles.find(profile => profile.id === parseInt(id));
+  const [profile, setProfile] = useState(null);
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  if (!profile) {
-    return <h2>Profile not found</h2>;
-  }
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getProfile(id);
+        setProfile(data);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        setError('Failed to load profile. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [id]);
+
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    setSubmitting(true);
+    try {
+      const comment = {
+        author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'Anonymous',
+        content: newComment
+      };
+      await addComment(id, comment);
+      const updatedProfile = await getProfile(id);
+      setProfile(updatedProfile);
+      setNewComment('');
+      setError(null);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      setError('Failed to add comment. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return (
+    <div className="d-flex justify-content-center align-items-center" style={{ height: '50vh' }}>
+      <Spinner animation="border" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </Spinner>
+    </div>
+  );
+
+  if (!profile && !error) return <div className="text-center p-5">Profile not found</div>;
+  if (error) return <Alert variant="danger" className="m-3">{error}</Alert>;
+
   return (
-    <div className="profile-detail-content" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-      <img src={profile.image} alt={profile.name} className="profile-detail-img" />
-      <div style={{marginLeft:'15px'}}>
-      <h2>{profile.name}</h2>
-      <p className="degree">🎓  {profile.designation}</p>
-      <p className="description">
-      {profile.description}
-      </p>
-      <div className="comments">
-        <div className="comment">
-          <p><strong>Pranjal Gaur</strong></p>
-          <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
+    <div className="profile-detail-content">
+      <div className="profile-header d-flex flex-column flex-md-row align-items-center mb-4">
+        <img
+          src={getProfileImageUrl(profile.id)}
+          alt={profile.name}
+          className="profile-detail-img mb-3 mb-md-0"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+          }}
+        />
+        <div className="profile-info ms-md-4">
+          <h2 className="profile-name">{profile.name}</h2>
+          <p className="degree">🎓 {profile.designation}</p>
+          <p className="description">{profile.description}</p>
         </div>
       </div>
-      <input type="text" placeholder="Your Message..." className="message-input" />
+
+      <div className="comments-section">
+        <h3 className="comments-title">Messages</h3>
+        {error && <Alert variant="danger">{error}</Alert>}
+
+        <div className="comments-list">
+          {profile.comments && profile.comments.length > 0 ? (
+            profile.comments.map((comment, index) => (
+              <div className="comment" key={index}>
+                <p className="comment-author"><strong>{comment.author}</strong></p>
+                <p className="comment-content">{comment.content}</p>
+              </div>
+            ))
+          ) : (
+            <p className="no-comments">No messages yet. Be the first to leave a message!</p>
+          )}
+        </div>
+
+        <form onSubmit={handleAddComment} className="comment-form mt-4">
+          <div className="input-group">
+            <input
+              type="text"
+              placeholder="Write a message..."
+              className="form-control message-input"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              disabled={submitting}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!newComment.trim() || submitting}
+            >
+              {submitting ? 'Sending...' : 'Send'}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
