@@ -29,10 +29,10 @@ const ProfilePage = () => {
       <Navbardesk />
       <Container fluid className="profile-page-container">
         <Row className="profile-page-row">
-          <Col lg={3} md={4} className="profile-list">
+          <Col lg={2} md={3} className="profile-list">
             <ProfileCard />
           </Col>
-          <Col lg={9} md={8} className="profile-detail">
+          <Col lg={10} md={9} className="profile-detail">
             <ProfileDetail />
           </Col>
         </Row>

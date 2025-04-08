@@ -7,6 +7,7 @@
   display: flex;
   align-items: center;
   text-decoration: none;
+  margin-right: 2rem;
 }
 
 .navbar-spacer {
@@ -16,6 +17,16 @@
 .nav-link.active {
   font-weight: 600;
   color: #007bff !important;
+}
+
+.nav-links-left {
+  margin-left: 0;
+}
+
+.nav-links-right {
+  margin-right: 0;
+  display: flex;
+  align-items: center;
 }
 
 .build-profile-btn {

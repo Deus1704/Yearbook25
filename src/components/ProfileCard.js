@@ -50,7 +50,7 @@ const ProfileCard = () => {
 
   return (
     <>
-      <div className="sticky-top bg-light pt-3 pb-2">
+      <div className="sticky-top bg-light pt-2 pb-2">
         <Form className="search-bar">
           <FormControl
             type="text"
@@ -58,6 +58,7 @@ const ProfileCard = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="profile-search"
+            aria-label="Search profiles"
           />
         </Form>
       </div>

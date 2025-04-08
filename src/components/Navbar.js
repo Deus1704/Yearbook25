@@ -67,7 +67,7 @@ const Navbardesk = () => {
         </footer>
       ) : (
         <Navbar bg="light" expand="lg" fixed="top" expanded={expanded} className="desktop-navbar">
-          <Container>
+          <Container fluid className="px-4">
             <Link to="/" className="navbar-brand-link">
               <img src={logo} alt="Logo" className="logo me-2" />
               <Navbar.Brand>Yearbook 2024</Navbar.Brand>
@@ -77,7 +77,7 @@ const Navbardesk = () => {
               onClick={() => setExpanded(expanded ? false : "expanded")}
             />
             <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="me-auto">
+              <Nav className="me-auto nav-links-left">
                 <Nav.Link
                   as={Link}
                   to="/"
@@ -119,7 +119,7 @@ const Navbardesk = () => {
                   Team
                 </Nav.Link>
               </Nav>
-              <Nav>
+              <Nav className="nav-links-right">
                 {currentUser && (
                   <>
                     <Nav.Link

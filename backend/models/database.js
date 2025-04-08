@@ -28,6 +28,27 @@ db.serialize(() => {
       FOREIGN KEY (profile_id) REFERENCES profiles (id)
     )
   `);
+
+  // Confessions table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS confessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      message TEXT NOT NULL,
+      author TEXT DEFAULT 'Anonymous',
+      recipient TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Messages table (for general messages not tied to profiles)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      author TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 });
 
-module.exports = db; 
+module.exports = db;

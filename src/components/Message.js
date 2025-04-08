@@ -50,7 +50,7 @@ const Message = () => {
       <Link to="/" className="back-button">
         <i className="fas fa-arrow-left"></i> Back
       </Link>
-      
+
       <div className="profile-image-container">
         <img src={getProfileImageUrl(profile.id)} alt={profile.name} />
       </div>
@@ -69,13 +69,22 @@ const Message = () => {
         </div>
 
         <form onSubmit={handleSubmit} className='profile-message'>
-          <input
-            type="text"
-            className="message-input"
-            placeholder="Write your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-          />
+          <div className="message-input-container">
+            <input
+              type="text"
+              className="message-input"
+              placeholder="Write your message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="send-button"
+              disabled={!newMessage.trim()}
+            >
+              Send
+            </button>
+          </div>
         </form>
       </div>
     </div>
