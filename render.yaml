@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: yearbook25
+    env: docker
+    dockerfilePath: ./Dockerfile.prod
+    buildCommand: docker build -t yearbook25 -f Dockerfile.prod .
+    startCommand: docker run -p $PORT:3000 -p 5000:5000 yearbook25
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
