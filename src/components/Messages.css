@@ -50,6 +50,9 @@ body {
   font-size: 16px;
   line-height: 1.5;
   transition: transform 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .message-item:hover {
@@ -76,6 +79,11 @@ body {
 
 .message-content {
   margin: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .message-form-container {
@@ -98,7 +106,7 @@ body {
   .message-item {
     font-size: 14px;
   }
-  
+
   .message-form-container {
     padding: 15px;
   }

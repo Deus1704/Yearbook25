@@ -77,7 +77,7 @@ const ProfileDetail = () => {
         />
         <div className="profile-info ms-md-4">
           <h2 className="profile-name">{profile.name}</h2>
-          <p className="degree">🎓 {profile.designation}</p>
+          <p className="degree"><i className="fas fa-graduation-cap me-2"></i>{profile.designation}</p>
           <p className="description">{profile.description}</p>
         </div>
       </div>
@@ -113,8 +113,9 @@ const ProfileDetail = () => {
               type="submit"
               variant="primary"
               disabled={!newComment.trim() || submitting}
+              className="send-button"
             >
-              {submitting ? 'Sending...' : 'Send'}
+              {submitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
             </Button>
           </div>
         </form>

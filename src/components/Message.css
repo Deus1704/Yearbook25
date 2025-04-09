@@ -54,6 +54,11 @@ body {
     overflow-y: auto;
     padding: 15px;
     padding-bottom: 80px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .message-item {
@@ -61,10 +66,19 @@ body {
     border-radius: 10px;
     padding: 12px;
     margin-bottom: 10px;
+    overflow: hidden;
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .message-content {
     width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    max-width: 100%;
   }
 
   .profile-name {
@@ -80,6 +94,13 @@ body {
     color: #555;
     line-height: 1.4;
     word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    max-width: 100%;
+    overflow: hidden;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .message-input-container {
