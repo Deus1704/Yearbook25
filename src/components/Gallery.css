@@ -6,7 +6,7 @@ body {
 }
 
 .gallery-container {
-  padding: 80px 20px 20px 20px; /* Added top padding to account for fixed navbar */
+  padding: 30px 20px 20px 20px; /* Added top padding to account for fixed navbar */
   max-width: 1200px;
   margin: 0 auto;
 }

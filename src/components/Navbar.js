@@ -40,7 +40,7 @@ const Navbardesk = () => {
   // Helper function to check if a path is active
   const isActive = (path) => {
     if (path === '/') {
-      return location.pathname === '/' || location.pathname.startsWith('/profileD');
+      return location.pathname === '/' || location.pathname.startsWith('/profileD') || location.pathname.startsWith('/profile/');
     }
     return location.pathname.startsWith(path);
   };
@@ -147,7 +147,7 @@ const Navbardesk = () => {
           </Container>
         </Navbar>
       )}
-      {!isMobile && <div className="navbar-spacer"></div>}
+      {/* Navbar spacer removed - now handled by Layout component */}
     </>
   );
 };

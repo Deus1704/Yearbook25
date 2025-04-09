@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
 import './App.css';
 import Home from './components/Home';
 import GoogleSignIn from './components/GoogleSignIn';
@@ -13,6 +13,7 @@ import Confessions from './components/Confessions';
 import BuildProfile from './components/BuildProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import Layout from './components/Layout';
 
 function App() {
   return (
@@ -22,18 +23,20 @@ function App() {
           {/* Public route - Login */}
           <Route path="/login" element={<GoogleSignIn />} />
 
-          {/* Protected routes */}
+          {/* Protected routes with Layout */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/profile/:id" element={<Profile />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/profile-page" element={<ProfilePage />} />
-            <Route path="/message/:id" element={<Message />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/confessions" element={<Confessions />} />
-            <Route path="/profileD/:id" element={<ProfilePage />} />
-            <Route path="/build-profile" element={<BuildProfile />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/profile/:id" element={<Profile />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/profile-page" element={<ProfilePage />} />
+              <Route path="/message/:id" element={<Message />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/confessions" element={<Confessions />} />
+              <Route path="/profileD/:id" element={<ProfilePage />} />
+              <Route path="/build-profile" element={<BuildProfile />} />
+            </Route>
           </Route>
 
           {/* Default route - redirects to login */}

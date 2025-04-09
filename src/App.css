@@ -1,0 +1,4 @@
+/* Layout styles */
+.page-with-navbar {
+  padding-top: 56px; /* Match the navbar height */
+}
