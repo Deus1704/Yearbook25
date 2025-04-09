@@ -65,60 +65,68 @@ const ProfileDetail = () => {
 
   return (
     <div className="profile-detail-content">
-      <div className="profile-header d-flex flex-column flex-md-row align-items-center mb-4">
-        <img
-          src={getProfileImageUrl(profile.id)}
-          alt={profile.name}
-          className="profile-detail-img mb-3 mb-md-0"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = 'https://via.placeholder.com/150?text=No+Image';
-          }}
-        />
-        <div className="profile-info ms-md-4">
-          <h2 className="profile-name">{profile.name}</h2>
-          <p className="degree"><i className="fas fa-graduation-cap me-2"></i>{profile.designation}</p>
-          <p className="description">{profile.description}</p>
-        </div>
-      </div>
-
-      <div className="comments-section">
-        <h3 className="comments-title">Messages</h3>
-        {error && <Alert variant="danger">{error}</Alert>}
-
-        <div className="comments-list">
-          {profile.comments && profile.comments.length > 0 ? (
-            profile.comments.map((comment, index) => (
-              <div className="comment" key={index}>
-                <p className="comment-author"><strong>{comment.author}</strong></p>
-                <p className="comment-content">{comment.content}</p>
-              </div>
-            ))
-          ) : (
-            <p className="no-comments">No messages yet. Be the first to leave a message!</p>
-          )}
-        </div>
-
-        <form onSubmit={handleAddComment} className="comment-form mt-4">
-          <div className="input-group">
-            <input
-              type="text"
-              placeholder="Write a message..."
-              className="form-control message-input"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              disabled={submitting}
+      <div className="profile-layout-container">
+        {/* Left column - Profile details */}
+        <div className="profile-details-column">
+          <div className="profile-header">
+            <img
+              src={getProfileImageUrl(profile.id)}
+              alt={profile.name}
+              className="profile-detail-img"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://via.placeholder.com/300?text=No+Image';
+              }}
             />
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={!newComment.trim() || submitting}
-              className="send-button"
-            >
-              {submitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
-            </Button>
+            <div className="profile-info">
+              <h2 className="profile-name">{profile.name}</h2>
+              <p className="degree"><i className="fas fa-graduation-cap me-2"></i>{profile.designation}</p>
+              <p className="description">{profile.description}</p>
+            </div>
           </div>
-        </form>
+        </div>
+
+        {/* Right column - Messages section */}
+        <div className="messages-column">
+          <div className="comments-section">
+            <h3 className="comments-title">Messages</h3>
+            {error && <Alert variant="danger">{error}</Alert>}
+
+            <div className="comments-list">
+              {profile.comments && profile.comments.length > 0 ? (
+                profile.comments.map((comment, index) => (
+                  <div className="comment" key={index}>
+                    <p className="comment-author"><strong>{comment.author}</strong></p>
+                    <p className="comment-content">{comment.content}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="no-comments">No messages yet. Be the first to leave a message!</p>
+              )}
+            </div>
+
+            <form onSubmit={handleAddComment} className="comment-form mt-4">
+              <div className="input-group">
+                <input
+                  type="text"
+                  placeholder="Write a message..."
+                  className="form-control message-input"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  disabled={submitting}
+                />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!newComment.trim() || submitting}
+                  className="send-button"
+                >
+                  {submitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );
