@@ -2,7 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Gallery.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
-import { getProfiles, getProfileImageUrl } from '../services/api';
+import {
+  getProfiles,
+  getProfileImageUrl,
+  getMemoryImages,
+  uploadMultipleMemoryImages,
+  getMemoryImageUrl
+} from '../services/api';
 import Navbardesk from './Navbar';
 import { Container, Form, Button, Spinner } from 'react-bootstrap';
 import { FaPlus, FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
@@ -10,6 +16,7 @@ import { FaPlus, FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
 const Gallery = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [profiles, setProfiles] = useState([]);
+  const [allImages, setAllImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -131,7 +138,7 @@ const Gallery = () => {
     }
   };
 
-  // Handle file upload
+  // Handle file upload - now actually uploads to the database
   const handleUpload = async (e) => {
     e.preventDefault();
     if (selectedFiles.length === 0) {
@@ -143,29 +150,27 @@ const Gallery = () => {
     setUploadError(null);
 
     try {
-      // Create form data for upload
-      const formData = new FormData();
-      selectedFiles.forEach((file, index) => {
-        formData.append(`image-${index}`, file);
-      });
+      // Upload the images to the server
+      const uploadedImages = await uploadMultipleMemoryImages(selectedFiles);
 
-      // In a real application, you would send this to your server
-      // For now, we'll simulate a successful upload after a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Add the new images to the profiles (simulated)
-      const newProfiles = previewUrls.map((url, index) => ({
-        id: `temp-${Date.now()}-${index}`,
-        name: `New Memory ${index + 1}`,
-        tempImage: url
+      // Create temporary objects for immediate display
+      const newImages = uploadedImages.map((image, index) => ({
+        id: image.id,
+        name: image.name || `Memory ${index + 1}`,
+        type: 'memory',
+        imageUrl: getMemoryImageUrl(image.id)
       }));
 
-      setProfiles([...newProfiles, ...profiles]);
+      // Add the new images to allImages
+      setAllImages(prevImages => [...newImages, ...prevImages]);
 
       // Close the modal and reset state
       setShowUploadModal(false);
       setSelectedFiles([]);
       setPreviewUrls([]);
+
+      // Show success message
+      alert(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}!`);
     } catch (error) {
       console.error('Error uploading images:', error);
       setUploadError('Failed to upload images. Please try again.');
@@ -174,25 +179,49 @@ const Gallery = () => {
     }
   };
 
-  // Effect to handle screen size changes and fetch profiles
+  // Effect to handle screen size changes and fetch data
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
 
-    const fetchProfiles = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getProfiles();
-        setProfiles(data);
+        setLoading(true);
+        // Fetch both profiles and memory images in parallel
+        const [profilesData, memoryImagesData] = await Promise.all([
+          getProfiles(),
+          getMemoryImages()
+        ]);
+
+        setProfiles(profilesData);
+
+        // Combine profile images and memory images into a single array for display
+        const profileImages = profilesData.map(profile => ({
+          id: profile.id,
+          name: profile.name,
+          type: 'profile',
+          imageUrl: getProfileImageUrl(profile.id)
+        }));
+
+        const memoryImgs = memoryImagesData.map(memory => ({
+          id: memory.id,
+          name: memory.name || 'Memory Image',
+          type: 'memory',
+          imageUrl: getMemoryImageUrl(memory.id)
+        }));
+
+        // Combine and shuffle all images
+        setAllImages([...profileImages, ...memoryImgs].sort(() => 0.5 - Math.random()));
       } catch (error) {
-        console.error('Error fetching profiles:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
     checkScreenSize();
-    fetchProfiles();
+    fetchData();
     window.addEventListener('resize', checkScreenSize);
 
     return () => {
@@ -203,17 +232,17 @@ const Gallery = () => {
   // No animation delay - we've removed the need for this
   // Animation starts immediately via CSS
 
-  // Function to split profiles into rows for the memory wall
-  const splitProfiles = (profiles) => {
+  // Function to split images into rows for the memory wall
+  const splitImages = (images) => {
     const minItemsPerRow = 8; // Ensure we have enough items for continuous flow
 
-    if (profiles.length < minItemsPerRow) {
-      // If we have fewer profiles than needed, duplicate them to fill each row
+    if (images.length < minItemsPerRow) {
+      // If we have fewer images than needed, duplicate them to fill each row
       const duplicated = [];
       while (duplicated.length < minItemsPerRow) {
-        duplicated.push(...profiles);
+        duplicated.push(...images);
       }
-      // Create 4 rows with different shuffles of the duplicated profiles
+      // Create 4 rows with different shuffles of the duplicated images
       return [
         [...duplicated].sort(() => 0.5 - Math.random()).slice(0, minItemsPerRow),
         [...duplicated].sort(() => 0.5 - Math.random()).slice(0, minItemsPerRow),
@@ -222,28 +251,28 @@ const Gallery = () => {
       ];
     }
 
-    // Shuffle the profiles for more randomness
-    const shuffled = [...profiles].sort(() => 0.5 - Math.random());
+    // Shuffle the images for more randomness
+    const shuffled = [...images].sort(() => 0.5 - Math.random());
 
-    // Create 4 rows with different profiles
+    // Create 4 rows with different images
     const rowCount = 4;
     const rows = [];
 
     for (let i = 0; i < rowCount; i++) {
       // Create a different starting point for each row
       const startIndex = Math.floor((i * shuffled.length) / rowCount) % shuffled.length;
-      const rowProfiles = [];
+      const rowImages = [];
 
-      // Get profiles for this row, wrapping around if needed
+      // Get images for this row, wrapping around if needed
       // Ensure we have at least minItemsPerRow items
       const itemCount = Math.max(minItemsPerRow, shuffled.length);
       for (let j = 0; j < itemCount; j++) {
         const index = (startIndex + j) % shuffled.length;
-        rowProfiles.push(shuffled[index]);
+        rowImages.push(shuffled[index]);
       }
 
       // Shuffle each row for more randomness
-      rows.push(rowProfiles.sort(() => 0.5 - Math.random()));
+      rows.push(rowImages.sort(() => 0.5 - Math.random()));
     }
 
     return rows;
@@ -267,22 +296,23 @@ const Gallery = () => {
 
 
   // Function to render a memory item
-  const renderMemoryItem = (profile, index, preserveSize = false) => {
+  const renderMemoryItem = (image, index, preserveSize = false) => {
     // Only apply random size if not preserving original size
     const sizeClass = preserveSize ? 'preserve-size' : getRandomSize();
     const rotationClass = getRandomRotation();
 
-    // Determine the image source (handle both API images and temporary uploaded images)
-    const imageSrc = profile.tempImage || getProfileImageUrl(profile.id);
+    // Determine the image source based on the image object structure
+    // Handle temporary images from uploads that haven't been saved to DB yet
+    const imageSrc = image.tempImage || image.imageUrl || 'https://via.placeholder.com/200x200?text=No+Image';
 
     return (
       <div
         className={`memory-item ${sizeClass} ${rotationClass}`}
-        key={`${profile.id}-${index}`}
+        key={`${image.id}-${index}`}
       >
         <img
           src={imageSrc}
-          alt={profile.name}
+          alt={image.name}
           className="memory-image"
           onError={(e) => {
             e.target.onerror = null;
@@ -295,9 +325,9 @@ const Gallery = () => {
 
   // Function to determine if an image should preserve its original size
   const shouldPreserveSize = () => {
-    // For now, randomly assign some images to preserve size
+    // Increased probability to preserve original size
     // In a real app, you might base this on actual image dimensions
-    return Math.random() > 0.7; // 30% chance to preserve original size
+    return Math.random() > 0.4; // 60% chance to preserve original size
   };
 
   // Function to create duplicate items for seamless looping
@@ -310,21 +340,21 @@ const Gallery = () => {
 
   // Function to render the memory wall - animation starts immediately from center
   const renderMemoryWall = () => {
-    const rows = splitProfiles(profiles);
+    const rows = splitImages(allImages);
 
     return (
       <div className="memory-wall">
-        {rows.map((rowProfiles, rowIndex) => {
+        {rows.map((rowImages, rowIndex) => {
           // Create duplicates for seamless looping
-          const duplicatedProfiles = createDuplicateItems(rowProfiles);
+          const duplicatedImages = createDuplicateItems(rowImages);
 
           return (
             <div className="memory-row" key={`row-${rowIndex}`}>
               <div className="track-container">
                 <div className="memory-track">
-                  {duplicatedProfiles.map((profile, index) => {
-                    const preserveSize = shouldPreserveSize(profile);
-                    return renderMemoryItem(profile, `${rowIndex}-${index}`, preserveSize);
+                  {duplicatedImages.map((image, index) => {
+                    const preserveSize = shouldPreserveSize();
+                    return renderMemoryItem(image, `${rowIndex}-${index}`, preserveSize);
                   })}
                 </div>
               </div>
@@ -437,19 +467,27 @@ const Gallery = () => {
               <i className="fas fa-arrow-left"></i> Back
             </Link>
             <h1 className="gallery-title">Memory Lane</h1>
-            <p className="messages-subtitle">A nostalgic journey through our best moments together</p>
+            <p className="messages-subtitle">A nostalgic journey through your best moments together</p>
           </div>
           <div className="gallery-content">
-            {profiles.length === 0 ? (
+            {allImages.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-state-icon">
                   <i className="fas fa-images"></i>
                 </div>
                 <h3>No memories yet</h3>
-                <p>Create your profile to add your photo to the memory lane</p>
-                <Link to="/build-profile" className="btn btn-primary mt-3">
-                  <i className="fas fa-plus-circle me-2"></i> Build Your Profile
-                </Link>
+                <p>Upload photos or create your profile to add to the memory lane</p>
+                <div className="d-flex gap-3 justify-content-center">
+                  <button
+                    className="btn btn-primary mt-3"
+                    onClick={toggleUploadModal}
+                  >
+                    <i className="fas fa-upload me-2"></i> Upload Photos
+                  </button>
+                  <Link to="/build-profile" className="btn btn-outline-primary mt-3">
+                    <i className="fas fa-plus-circle me-2"></i> Build Your Profile
+                  </Link>
+                </div>
               </div>
             ) : (
               <>

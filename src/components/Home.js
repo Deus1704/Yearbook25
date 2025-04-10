@@ -38,12 +38,18 @@ const Home = () => {
 
     const fetchProfiles = async () => {
       try {
+        console.log('Fetching profiles in Home component');
         const data = await getProfiles();
+        console.log('Profiles received in Home component:', data);
         setProfiles(data);
         setError(null);
       } catch (error) {
-        console.error('Error fetching profiles:', error);
-        setError('Failed to load profiles. Please try again.');
+        console.error('Error fetching profiles in Home component:', error);
+        if (error.code === 'ERR_NETWORK') {
+          setError('Network error: Cannot connect to the server. Please make sure the backend is running.');
+        } else {
+          setError(`Failed to load profiles: ${error.message}. Please try again.`);
+        }
       } finally {
         setLoading(false);
       }
