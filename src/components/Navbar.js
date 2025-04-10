@@ -58,7 +58,7 @@ const Navbardesk = () => {
           <Link to="/build-profile" className={`footer-btn ${isActive('/build-profile') ? 'active' : ''}`}>
             <i className="fas fa-plus-circle"></i>
           </Link>
-          <Link to="/message" className={`footer-btn ${isActive('/message') ? 'active' : ''}`}>
+          <Link to="/messages" className={`footer-btn ${isActive('/messages') ? 'active' : ''}`}>
             <i className="fas fa-comment-alt"></i>
           </Link>
           <Link to="/team" className={`footer-btn ${isActive('/team') ? 'active' : ''}`}>
@@ -96,8 +96,8 @@ const Navbardesk = () => {
                 </Nav.Link>
                 <Nav.Link
                   as={Link}
-                  to="/message"
-                  className={isActive('/message') ? 'active' : ''}
+                  to="/messages"
+                  className={isActive('/messages') ? 'active' : ''}
                   onClick={() => setExpanded(false)}
                 >
                   Messages
