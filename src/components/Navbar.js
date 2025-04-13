@@ -66,11 +66,11 @@ const Navbardesk = () => {
           </Link>
         </footer>
       ) : (
-        <Navbar bg="light" expand="lg" fixed="top" expanded={expanded} className="desktop-navbar">
+        <Navbar bg="dark" expand="lg" fixed="top" expanded={expanded} className="desktop-navbar" variant="dark">
           <Container fluid className="px-4">
             <Link to="/" className="navbar-brand-link">
               <img src={logo} alt="Logo" className="logo me-2" />
-              <Navbar.Brand>Yearbook 2024</Navbar.Brand>
+              <Navbar.Brand>Yearbook 2025</Navbar.Brand>
             </Link>
             <Navbar.Toggle
               aria-controls="basic-navbar-nav"
@@ -131,7 +131,7 @@ const Navbardesk = () => {
                       <i className="fas fa-plus-circle me-1"></i> Build Your Profile
                     </Nav.Link>
                     <Button
-                      variant="outline-danger"
+                      variant="outline-light"
                       onClick={() => {
                         setExpanded(false);
                         handleLogout();
