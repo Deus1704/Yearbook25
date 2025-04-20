@@ -14,6 +14,7 @@ import BuildProfile from './components/BuildProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
+import LandingPage from './components/LandingPage';
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
       <Router>
         <Routes>
           {/* Public route - Login */}
-          <Route path="/login" element={<GoogleSignIn />} />
+          <Route path="/login" element={<LandingPage />} />
 
           {/* Protected routes with Layout */}
           <Route element={<ProtectedRoute />}>
