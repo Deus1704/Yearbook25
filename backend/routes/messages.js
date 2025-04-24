@@ -3,9 +3,9 @@ const router = express.Router();
 const db = require('../models/database');
 
 // Get all messages
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM messages ORDER BY created_at DESC').all();
+    const rows = db.all('SELECT * FROM messages ORDER BY created_at DESC');
     res.json(rows);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -13,9 +13,9 @@ router.get('/', (req, res) => {
 });
 
 // Get a single message
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const row = db.prepare('SELECT * FROM messages WHERE id = ?').get(req.params.id);
+    const row = db.get('SELECT * FROM messages WHERE id = ?', [req.params.id]);
     if (!row) {
       return res.status(404).json({ message: 'Message not found' });
     }
@@ -26,7 +26,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Create a new message
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { author, content } = req.body;
 
   if (!content) {
@@ -38,8 +38,10 @@ router.post('/', (req, res) => {
   }
 
   try {
-    const insertStmt = db.prepare('INSERT INTO messages (author, content) VALUES (?, ?)');
-    const result = insertStmt.run(author, content);
+    const result = db.run(
+      'INSERT INTO messages (author, content) VALUES (?, ?)',
+      [author, content]
+    );
 
     res.status(201).json({
       id: result.lastInsertRowid,
@@ -53,10 +55,9 @@ router.post('/', (req, res) => {
 });
 
 // Delete a message
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const deleteStmt = db.prepare('DELETE FROM messages WHERE id = ?');
-    const result = deleteStmt.run(req.params.id);
+    const result = db.run('DELETE FROM messages WHERE id = ?', [req.params.id]);
 
     if (result.changes === 0) {
       return res.status(404).json({ message: 'Message not found' });

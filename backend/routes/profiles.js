@@ -10,15 +10,15 @@ const upload = multer({
 });
 
 // Get all profiles
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const rows = db.prepare(`
+    const rows = db.all(`
       SELECT p.*,
              COUNT(c.id) as comment_count
       FROM profiles p
       LEFT JOIN comments c ON p.id = c.profile_id
       GROUP BY p.id
-    `).all();
+    `);
     res.json(rows);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -26,15 +26,15 @@ router.get('/', (req, res) => {
 });
 
 // Get single profile with comments
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const profile = db.prepare('SELECT * FROM profiles WHERE id = ?').get(req.params.id);
+    const profile = db.get('SELECT * FROM profiles WHERE id = ?', [req.params.id]);
 
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
 
-    const comments = db.prepare('SELECT * FROM comments WHERE profile_id = ?').all(req.params.id);
+    const comments = db.all('SELECT * FROM comments WHERE profile_id = ?', [req.params.id]);
     profile.comments = comments;
     res.json(profile);
   } catch (err) {
@@ -43,12 +43,12 @@ router.get('/:id', (req, res) => {
 });
 
 // Get profile by user_id
-router.get('/user/:userId', (req, res) => {
+router.get('/user/:userId', async (req, res) => {
   console.log('Fetching profile for user_id:', req.params.userId);
 
   try {
     // Proceed with the query
-    const profile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(req.params.userId);
+    const profile = db.get('SELECT * FROM profiles WHERE user_id = ?', [req.params.userId]);
 
     console.log('Profile found:', profile);
 
@@ -64,7 +64,7 @@ router.get('/user/:userId', (req, res) => {
 });
 
 // Create new profile
-router.post('/', upload.single('image'), (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   const { name, designation, description, user_id } = req.body;
   const image = req.file ? req.file.buffer : null;
 
@@ -76,7 +76,7 @@ router.post('/', upload.single('image'), (req, res) => {
 
   try {
     // Check if user already has a profile
-    const existingProfile = db.prepare('SELECT id FROM profiles WHERE user_id = ?').get(user_id);
+    const existingProfile = db.get('SELECT id FROM profiles WHERE user_id = ?', [user_id]);
 
     if (existingProfile) {
       console.log('User already has a profile with ID:', existingProfile.id);
@@ -86,12 +86,11 @@ router.post('/', upload.single('image'), (req, res) => {
     console.log('Creating new profile for user');
 
     // Create new profile if user doesn't have one
-    const insertStmt = db.prepare(`
-      INSERT INTO profiles (name, designation, description, image, user_id)
-      VALUES (?, ?, ?, ?, ?)
-    `);
+    const result = db.run(
+      'INSERT INTO profiles (name, designation, description, image, user_id) VALUES (?, ?, ?, ?, ?)',
+      [name, designation, description, image, user_id]
+    );
 
-    const result = insertStmt.run(name, designation, description, image, user_id);
     const newId = result.lastInsertRowid;
 
     console.log('Profile created with ID:', newId);
@@ -110,7 +109,7 @@ router.post('/', upload.single('image'), (req, res) => {
 });
 
 // Update existing profile
-router.put('/:id', upload.single('image'), (req, res) => {
+router.put('/:id', upload.single('image'), async (req, res) => {
   const { name, designation, description, user_id } = req.body;
   const profileId = req.params.id;
   const image = req.file ? req.file.buffer : null;
@@ -123,7 +122,7 @@ router.put('/:id', upload.single('image'), (req, res) => {
 
   try {
     // Check if profile exists and belongs to the user
-    const profile = db.prepare('SELECT * FROM profiles WHERE id = ?').get(profileId);
+    const profile = db.get('SELECT * FROM profiles WHERE id = ?', [profileId]);
 
     if (!profile) {
       return res.status(404).json({ error: 'Profile not found' });
@@ -138,21 +137,16 @@ router.put('/:id', upload.single('image'), (req, res) => {
     console.log('Updating profile with new data');
 
     // Update the profile
-    let updateStmt;
     if (image) {
-      updateStmt = db.prepare(`
-        UPDATE profiles
-        SET name = ?, designation = ?, description = ?, image = ?, user_id = ?
-        WHERE id = ?
-      `);
-      updateStmt.run(name, designation, description, image, user_id, profileId);
+      db.run(
+        'UPDATE profiles SET name = ?, designation = ?, description = ?, image = ?, user_id = ? WHERE id = ?',
+        [name, designation, description, image, user_id, profileId]
+      );
     } else {
-      updateStmt = db.prepare(`
-        UPDATE profiles
-        SET name = ?, designation = ?, description = ?, user_id = ?
-        WHERE id = ?
-      `);
-      updateStmt.run(name, designation, description, user_id, profileId);
+      db.run(
+        'UPDATE profiles SET name = ?, designation = ?, description = ?, user_id = ? WHERE id = ?',
+        [name, designation, description, user_id, profileId]
+      );
     }
 
     console.log('Profile updated successfully');
@@ -172,17 +166,15 @@ router.put('/:id', upload.single('image'), (req, res) => {
 });
 
 // Add comment to profile
-router.post('/:id/comments', (req, res) => {
+router.post('/:id/comments', async (req, res) => {
   const { author, content } = req.body;
   const profileId = req.params.id;
 
   try {
-    const insertStmt = db.prepare(`
-      INSERT INTO comments (profile_id, author, content)
-      VALUES (?, ?, ?)
-    `);
-
-    const result = insertStmt.run(profileId, author, content);
+    const result = db.run(
+      'INSERT INTO comments (profile_id, author, content) VALUES (?, ?, ?)',
+      [profileId, author, content]
+    );
 
     res.status(201).json({
       id: result.lastInsertRowid,
@@ -197,9 +189,9 @@ router.post('/:id/comments', (req, res) => {
 });
 
 // Get profile image
-router.get('/:id/image', (req, res) => {
+router.get('/:id/image', async (req, res) => {
   try {
-    const row = db.prepare('SELECT image FROM profiles WHERE id = ?').get(req.params.id);
+    const row = db.get('SELECT image FROM profiles WHERE id = ?', [req.params.id]);
 
     if (!row || !row.image) {
       return res.status(404).json({ message: 'Image not found' });

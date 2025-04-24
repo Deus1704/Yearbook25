@@ -9,24 +9,12 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// Ensure the memories table exists
-try {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS memories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      image BLOB NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-} catch (err) {
-  console.error('Error creating memories table:', err.message);
-}
+// Table is created in database.js initialization
 
 // Get all memory images
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const rows = db.prepare('SELECT id, name, created_at FROM memories ORDER BY created_at DESC').all();
+    const rows = db.all('SELECT id, name, created_at FROM memories ORDER BY created_at DESC');
     res.json(rows || []);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -34,9 +22,9 @@ router.get('/', (req, res) => {
 });
 
 // Get a single memory image metadata
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const row = db.prepare('SELECT id, name, created_at FROM memories WHERE id = ?').get(req.params.id);
+    const row = db.get('SELECT id, name, created_at FROM memories WHERE id = ?', [req.params.id]);
     if (!row) {
       return res.status(404).json({ message: 'Memory not found' });
     }
@@ -47,9 +35,9 @@ router.get('/:id', (req, res) => {
 });
 
 // Get memory image file
-router.get('/:id/image', (req, res) => {
+router.get('/:id/image', async (req, res) => {
   try {
-    const row = db.prepare('SELECT image FROM memories WHERE id = ?').get(req.params.id);
+    const row = db.get('SELECT image FROM memories WHERE id = ?', [req.params.id]);
     if (!row || !row.image) {
       return res.status(404).json({ message: 'Image not found' });
     }
@@ -64,7 +52,7 @@ router.get('/:id/image', (req, res) => {
 });
 
 // Upload a single memory image
-router.post('/', upload.single('image'), (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'Image is required' });
   }
@@ -73,8 +61,10 @@ router.post('/', upload.single('image'), (req, res) => {
   const image = req.file.buffer;
 
   try {
-    const insertStmt = db.prepare('INSERT INTO memories (name, image) VALUES (?, ?)');
-    const result = insertStmt.run(name, image);
+    const result = db.run(
+      'INSERT INTO memories (name, image) VALUES (?, ?)',
+      [name, image]
+    );
 
     res.status(201).json({
       id: result.lastInsertRowid,
@@ -87,34 +77,33 @@ router.post('/', upload.single('image'), (req, res) => {
 });
 
 // Upload multiple memory images
-router.post('/batch', upload.array('image', 10), (req, res) => {
+router.post('/batch', upload.array('image', 10), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'At least one image is required' });
   }
 
   try {
     const uploadedImages = [];
-    const insertStmt = db.prepare('INSERT INTO memories (name, image) VALUES (?, ?)');
 
-    // Use a transaction for better performance and atomicity
-    const transaction = db.transaction((files) => {
-      files.forEach((file, index) => {
-        const name = req.body[`name-${index}`] || null;
-        const image = file.buffer;
+    // Process each file individually (no transaction support in sql.js)
+    for (const file of req.files) {
+      const index = req.files.indexOf(file);
+      const name = req.body[`name-${index}`] || null;
+      const image = file.buffer;
 
-        const result = insertStmt.run(name, image);
-        uploadedImages.push({
-          id: result.lastInsertRowid,
-          name,
-          created_at: new Date().toISOString()
-        });
+      const result = db.run(
+        'INSERT INTO memories (name, image) VALUES (?, ?)',
+        [name, image]
+      );
+
+      uploadedImages.push({
+        id: result.lastInsertRowid,
+        name,
+        created_at: new Date().toISOString()
       });
-      return uploadedImages;
-    });
+    }
 
-    // Execute the transaction
-    const results = transaction(req.files);
-    res.status(201).json(results);
+    res.status(201).json(uploadedImages);
   } catch (err) {
     console.error('Error uploading images:', err);
     return res.status(400).json({ error: err.message });

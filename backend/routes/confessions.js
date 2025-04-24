@@ -2,25 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/database');
 
-// Ensure the confessions table exists
-try {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS confessions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      message TEXT NOT NULL,
-      author TEXT DEFAULT 'Anonymous',
-      recipient TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-} catch (err) {
-  console.error('Error creating confessions table:', err.message);
-}
+// Table is created in database.js initialization
 
 // Get all confessions
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM confessions ORDER BY created_at DESC').all();
+    const rows = db.all('SELECT * FROM confessions ORDER BY created_at DESC');
     // Return empty array if no rows found
     res.json(rows || []);
   } catch (err) {
@@ -30,9 +17,9 @@ router.get('/', (req, res) => {
 });
 
 // Get a single confession
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const row = db.prepare('SELECT * FROM confessions WHERE id = ?').get(req.params.id);
+    const row = db.get('SELECT * FROM confessions WHERE id = ?', [req.params.id]);
     if (!row) {
       return res.status(404).json({ message: 'Confession not found' });
     }
@@ -43,7 +30,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Create a new confession
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { message, author, recipient } = req.body;
 
@@ -54,11 +41,10 @@ router.post('/', (req, res) => {
     const authorValue = author || 'Anonymous';
     const recipientValue = recipient || null;
 
-    const insertStmt = db.prepare(
-      'INSERT INTO confessions (message, author, recipient) VALUES (?, ?, ?)'
+    const result = db.run(
+      'INSERT INTO confessions (message, author, recipient) VALUES (?, ?, ?)',
+      [message, authorValue, recipientValue]
     );
-
-    const result = insertStmt.run(message, authorValue, recipientValue);
 
     // Create a timestamp in ISO format
     const now = new Date().toISOString();
@@ -77,10 +63,9 @@ router.post('/', (req, res) => {
 });
 
 // Delete a confession
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const deleteStmt = db.prepare('DELETE FROM confessions WHERE id = ?');
-    const result = deleteStmt.run(req.params.id);
+    const result = db.run('DELETE FROM confessions WHERE id = ?', [req.params.id]);
 
     if (result.changes === 0) {
       return res.status(404).json({ message: 'Confession not found' });

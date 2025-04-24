@@ -3,6 +3,9 @@ const cors = require('cors');
 const multer = require('multer');
 require('dotenv').config();
 
+// Import database
+const db = require('./models/database');
+
 const app = express();
 
 // Middleware
@@ -31,4 +34,19 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/memories', memoryRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Initialize the database before starting the server
+async function startServer() {
+  try {
+    // Initialize the database
+    await db.init();
+
+    // Start the server
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+}
+
+startServer();
