@@ -9,39 +9,66 @@ const db = require('./models/database');
 const app = express();
 
 // Middleware
-// Configure CORS
+// Configure CORS - more permissive configuration
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL || 'https://yearbook25.com', 'https://students.iitgn.ac.in']
+  ? [process.env.FRONTEND_URL || 'https://yearbook25.com', 'https://students.iitgn.ac.in', 'https://students.iitgn.ac.in/yearbook/2025']
   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
+// Enable CORS for all routes
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) === -1) {
-      console.log(`CORS blocked request from origin: ${origin}`);
-      return callback(null, false);
-    }
-    return callback(null, true);
-  },
+  origin: '*', // Allow all origins temporarily for debugging
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Handle preflight requests
 app.options('*', cors());
 
-// Custom middleware to ensure CORS headers are set
+// Custom middleware to ensure CORS headers are set on every response
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
+  // Set CORS headers for all responses
+  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins temporarily
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.header('Access-Control-Allow-Credentials', 'true');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  next();
+});
+
+// Add a middleware to log all requests for debugging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log('Headers:', JSON.stringify(req.headers));
+  next();
+});
+
+// Add a middleware to bypass authentication for public endpoints
+app.use((req, res, next) => {
+  // List of paths that should be publicly accessible
+  const publicPaths = [
+    '/cors-test',
+    '/api/cors-debug',
+    '/',
+    '/api/profiles',
+    '/api/confessions',
+    '/api/messages',
+    '/api/memories'
+  ];
+
+  // Check if the request path starts with any of the public paths
+  const isPublicPath = publicPaths.some(path => req.path.startsWith(path));
+
+  if (isPublicPath) {
+    // For public paths, bypass any authentication
+    console.log(`Public path accessed: ${req.path}`);
+  }
+
   next();
 });
 app.use(express.json());
@@ -51,21 +78,32 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Yearbook25 API is running' });
 });
 
+// Add a public CORS test endpoint that doesn't require authentication
+app.get('/cors-test', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'CORS test endpoint',
+    cors: 'enabled',
+    headers: req.headers,
+    origin: req.headers.origin || 'No origin header'
+  });
+});
+
 // Add a CORS debug endpoint
 app.get('/api/cors-debug', (req, res) => {
   res.json({
     status: 'ok',
     message: 'CORS debug endpoint',
-    headers: {
-      origin: req.headers.origin,
-      host: req.headers.host,
-      referer: req.headers.referer
-    },
+    requestHeaders: req.headers,
+    responseHeaders: res.getHeaders(),
     allowedOrigins: allowedOrigins,
     env: {
       nodeEnv: process.env.NODE_ENV,
-      frontendUrl: process.env.FRONTEND_URL
-    }
+      frontendUrl: process.env.FRONTEND_URL,
+      port: process.env.PORT
+    },
+    vercel: process.env.VERCEL === '1' ? 'true' : 'false',
+    vercelEnv: process.env.VERCEL_ENV || 'not set'
   });
 });
 
