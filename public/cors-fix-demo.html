@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Fix Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .code-block {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .instructions {
+            border-left: 4px solid #4CAF50;
+            padding-left: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORS Fix Demo</h1>
+    <p>This page demonstrates how to use the CORS fix script to solve CORS issues in your frontend application.</p>
+    
+    <div class="instructions">
+        <h2>How to Use the CORS Fix Script</h2>
+        <p>To fix CORS issues in your frontend application, follow these steps:</p>
+        <ol>
+            <li>Copy the <code>cors-fix.js</code> file to your project</li>
+            <li>Include the script in your HTML before any other scripts that make API requests:</li>
+        </ol>
+        
+        <div class="code-block">
+            <pre>&lt;script src="/cors-fix.js"&gt;&lt;/script&gt;</pre>
+        </div>
+        
+        <p>That's it! The script will automatically intercept all API requests to your backend and route them through the CORS proxy.</p>
+    </div>
+    
+    <div class="instructions">
+        <h2>How It Works</h2>
+        <p>The CORS fix script:</p>
+        <ul>
+            <li>Overrides the <code>fetch</code> function to use the CORS proxy for API requests</li>
+            <li>Overrides the <code>XMLHttpRequest.prototype.open</code> and <code>XMLHttpRequest.prototype.send</code> methods to use the CORS proxy for API requests</li>
+            <li>Overrides <code>axios.request</code> (if axios is used) to use the CORS proxy for API requests</li>
+        </ul>
+        <p>All API requests to your backend will be routed through the CORS proxy, which adds the necessary CORS headers to allow cross-origin requests.</p>
+    </div>
+    
+    <div class="instructions">
+        <h2>Deployment</h2>
+        <p>To deploy this solution:</p>
+        <ol>
+            <li>Deploy the CORS proxy serverless function to Vercel</li>
+            <li>Include the CORS fix script in your frontend application</li>
+            <li>Update your frontend code to use the API directly (no need to modify your API calls)</li>
+        </ol>
+    </div>
+    
+    <script src="cors-fix.js"></script>
+    <script>
+        // This script will log a message to the console when the CORS fix script is loaded
+        console.log('Demo page loaded!');
+        
+        // You can test the CORS fix by making an API request here
+        // For example:
+        // fetch('https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app/api/profiles')
+        //     .then(response => response.json())
+        //     .then(data => console.log('Profiles:', data))
+        //     .catch(error => console.error('Error:', error));
+    </script>
+</body>
+</html>
