@@ -143,6 +143,7 @@
   .profile-info {
     text-align: center;
     width: 80%;
+    max-width: 600px;
     padding: 12px;
     background: linear-gradient(to bottom, rgba(255,255,255,0.97), rgba(248,249,250,0.97));
     border-radius: 18px;
@@ -151,6 +152,7 @@
     backdrop-filter: blur(8px);
     border: 1px solid rgba(52, 152, 219, 0.1);
     z-index: 2;
+    overflow: hidden;
   }
 
   @media (max-width: 768px) {
@@ -177,8 +179,9 @@
     .description {
       font-size: 1.4rem;
       margin: 1.5rem auto 1rem;
-      padding: 20px;
+      padding: 20px 35px;
       max-width: 100%;
+      word-break: break-word;
     }
 
     .profile-info {
@@ -250,7 +253,7 @@
     line-height: 1.8;
     color: #333;
     margin: 1.5rem auto 1rem;
-    padding: 25px 30px;
+    padding: 25px 40px;
     position: relative;
     font-family: 'Dancing Script', 'Great Vibes', cursive;
     max-width: 90%;
@@ -262,6 +265,10 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(52, 152, 219, 0.1);
     transition: all 0.3s ease;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow: hidden;
+    box-sizing: border-box;
   }
 
   .description:hover {
@@ -272,23 +279,24 @@
   .description::before,
   .description::after {
     content: '\201C';
-    font-size: 5rem;
+    font-size: 4rem;
     font-family: 'Great Vibes', cursive;
     color: #3498db;
     opacity: 0.3;
     position: absolute;
     line-height: 0;
+    z-index: 1;
   }
 
   .description::before {
     top: 20px;
-    left: 10px;
+    left: 15px;
   }
 
   .description::after {
     content: '\201D';
-    bottom: 0;
-    right: 10px;
+    bottom: 10px;
+    right: 15px;
   }
 
   .comments-section {
