@@ -1,19 +1,9 @@
-// Enhanced CORS Proxy Serverless Function
+// Simple CORS Proxy Serverless Function
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-  // Set CORS headers to allow requests from specific origins
-  const allowedOrigins = ['https://students.iitgn.ac.in', 'http://localhost:3000'];
-  const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // For development and testing, allow any origin
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE, PATCH');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
 
@@ -43,19 +33,11 @@ module.exports = async (req, res) => {
       method: method,
       url: targetUrl,
       headers: {
-        // Forward some headers from the original request
         'Content-Type': req.headers['content-type'] || 'application/json',
         'Accept': req.headers['accept'] || 'application/json',
-        'User-Agent': req.headers['user-agent'],
-        'Origin': 'https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app',
-        'Referer': 'https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app/'
-      },
-      // Important: Allow requests to go through even with invalid certificates
-      validateStatus: function (status) {
-        return status >= 200 && status < 600; // Accept all status codes to handle them properly
-      },
-      maxRedirects: 5,
-      timeout: 10000 // 10 seconds timeout
+        'User-Agent': req.headers['user-agent'] || 'CORS Proxy',
+        'Origin': 'https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app'
+      }
     };
 
     // Add request body for POST/PUT requests
@@ -66,29 +48,15 @@ module.exports = async (req, res) => {
     // Make the request to the target URL
     const response = await axios(options);
 
-    // Copy all response headers
-    const responseHeaders = response.headers;
-    for (const key in responseHeaders) {
-      // Skip setting these headers as they're already set or managed by the server
-      if (!['access-control-allow-origin', 'access-control-allow-credentials', 'access-control-allow-methods', 'access-control-allow-headers'].includes(key.toLowerCase())) {
-        res.setHeader(key, responseHeaders[key]);
-      }
-    }
-
     // Return the response with appropriate status code
-    return res.status(response.status).json(response.data);
+    return res.status(200).json(response.data);
   } catch (error) {
     console.error('Proxy error:', error.message);
-    console.error('Error details:', error.stack);
 
     // Return error details
-    const status = error.response ? error.response.status : 500;
-    const errorData = {
+    return res.status(500).json({
       error: error.message,
-      details: error.response ? error.response.data : 'No response details',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    };
-
-    return res.status(status).json(errorData);
+      details: error.response ? error.response.data : 'No response details'
+    });
   }
 };
