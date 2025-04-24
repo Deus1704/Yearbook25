@@ -11,69 +11,56 @@ const upload = multer({
 
 // Get all profiles
 router.get('/', (req, res) => {
-  db.all(`
-    SELECT p.*,
-           COUNT(c.id) as comment_count
-    FROM profiles p
-    LEFT JOIN comments c ON p.id = c.profile_id
-    GROUP BY p.id
-  `, [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const rows = db.prepare(`
+      SELECT p.*,
+             COUNT(c.id) as comment_count
+      FROM profiles p
+      LEFT JOIN comments c ON p.id = c.profile_id
+      GROUP BY p.id
+    `).all();
     res.json(rows);
-  });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Get single profile with comments
 router.get('/:id', (req, res) => {
-  db.get('SELECT * FROM profiles WHERE id = ?', [req.params.id], (err, profile) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const profile = db.prepare('SELECT * FROM profiles WHERE id = ?').get(req.params.id);
+
     if (!profile) {
       return res.status(404).json({ message: 'Profile not found' });
     }
 
-    db.all('SELECT * FROM comments WHERE profile_id = ?', [req.params.id], (err, comments) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      profile.comments = comments;
-      res.json(profile);
-    });
-  });
+    const comments = db.prepare('SELECT * FROM comments WHERE profile_id = ?').all(req.params.id);
+    profile.comments = comments;
+    res.json(profile);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Get profile by user_id
 router.get('/user/:userId', (req, res) => {
   console.log('Fetching profile for user_id:', req.params.userId);
 
-  // First check if the user_id column exists
-  db.all("PRAGMA table_info(profiles)", [], (err, tableInfo) => {
-    if (err) {
-      console.error('Error checking table schema:', err);
-      return res.status(500).json({ error: 'Error checking database schema: ' + err.message });
+  try {
+    // Proceed with the query
+    const profile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(req.params.userId);
+
+    console.log('Profile found:', profile);
+
+    if (!profile) {
+      return res.status(404).json({ message: 'Profile not found' });
     }
 
-    console.log('Table info:', tableInfo);
-
-    // Proceed with the query
-    db.get('SELECT * FROM profiles WHERE user_id = ?', [req.params.userId], (err, profile) => {
-      if (err) {
-        console.error('Error fetching profile by user_id:', err);
-        return res.status(500).json({ error: 'Database error: ' + err.message });
-      }
-
-      console.log('Profile found:', profile);
-
-      if (!profile) {
-        return res.status(404).json({ message: 'Profile not found' });
-      }
-
-      res.json(profile);
-    });
-  });
+    res.json(profile);
+  } catch (err) {
+    console.error('Error fetching profile by user_id:', err);
+    return res.status(500).json({ error: 'Database error: ' + err.message });
+  }
 });
 
 // Create new profile
@@ -87,12 +74,9 @@ router.post('/', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'User ID is required' });
   }
 
-  // Check if user already has a profile
-  db.get('SELECT id FROM profiles WHERE user_id = ?', [user_id], (err, existingProfile) => {
-    if (err) {
-      console.error('Error checking for existing profile:', err);
-      return res.status(500).json({ error: 'Database error: ' + err.message });
-    }
+  try {
+    // Check if user already has a profile
+    const existingProfile = db.prepare('SELECT id FROM profiles WHERE user_id = ?').get(user_id);
 
     if (existingProfile) {
       console.log('User already has a profile with ID:', existingProfile.id);
@@ -102,26 +86,27 @@ router.post('/', upload.single('image'), (req, res) => {
     console.log('Creating new profile for user');
 
     // Create new profile if user doesn't have one
-    db.run(`
+    const insertStmt = db.prepare(`
       INSERT INTO profiles (name, designation, description, image, user_id)
       VALUES (?, ?, ?, ?, ?)
-    `, [name, designation, description, image, user_id], function(err) {
-      if (err) {
-        console.error('Error creating profile:', err);
-        return res.status(400).json({ error: 'Error creating profile: ' + err.message });
-      }
+    `);
 
-      console.log('Profile created with ID:', this.lastID);
+    const result = insertStmt.run(name, designation, description, image, user_id);
+    const newId = result.lastInsertRowid;
 
-      res.status(201).json({
-        id: this.lastID,
-        name,
-        designation,
-        description,
-        user_id
-      });
+    console.log('Profile created with ID:', newId);
+
+    res.status(201).json({
+      id: newId,
+      name,
+      designation,
+      description,
+      user_id
     });
-  });
+  } catch (err) {
+    console.error('Error creating profile:', err);
+    return res.status(400).json({ error: 'Error creating profile: ' + err.message });
+  }
 });
 
 // Update existing profile
@@ -136,12 +121,9 @@ router.put('/:id', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: 'User ID is required' });
   }
 
-  // Check if profile exists and belongs to the user
-  db.get('SELECT * FROM profiles WHERE id = ?', [profileId], (err, profile) => {
-    if (err) {
-      console.error('Error checking profile existence:', err);
-      return res.status(500).json({ error: 'Database error: ' + err.message });
-    }
+  try {
+    // Check if profile exists and belongs to the user
+    const profile = db.prepare('SELECT * FROM profiles WHERE id = ?').get(profileId);
 
     if (!profile) {
       return res.status(404).json({ error: 'Profile not found' });
@@ -156,41 +138,37 @@ router.put('/:id', upload.single('image'), (req, res) => {
     console.log('Updating profile with new data');
 
     // Update the profile
-    let query, params;
+    let updateStmt;
     if (image) {
-      query = `
+      updateStmt = db.prepare(`
         UPDATE profiles
         SET name = ?, designation = ?, description = ?, image = ?, user_id = ?
         WHERE id = ?
-      `;
-      params = [name, designation, description, image, user_id, profileId];
+      `);
+      updateStmt.run(name, designation, description, image, user_id, profileId);
     } else {
-      query = `
+      updateStmt = db.prepare(`
         UPDATE profiles
         SET name = ?, designation = ?, description = ?, user_id = ?
         WHERE id = ?
-      `;
-      params = [name, designation, description, user_id, profileId];
+      `);
+      updateStmt.run(name, designation, description, user_id, profileId);
     }
 
-    db.run(query, params, function(err) {
-      if (err) {
-        console.error('Error updating profile:', err);
-        return res.status(400).json({ error: 'Error updating profile: ' + err.message });
-      }
+    console.log('Profile updated successfully');
 
-      console.log('Profile updated successfully');
-
-      res.json({
-        id: profileId,
-        name,
-        designation,
-        description,
-        user_id,
-        updated: true
-      });
+    res.json({
+      id: profileId,
+      name,
+      designation,
+      description,
+      user_id,
+      updated: true
     });
-  });
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    return res.status(400).json({ error: 'Error updating profile: ' + err.message });
+  }
 });
 
 // Add comment to profile
@@ -198,38 +176,43 @@ router.post('/:id/comments', (req, res) => {
   const { author, content } = req.body;
   const profileId = req.params.id;
 
-  db.run(`
-    INSERT INTO comments (profile_id, author, content)
-    VALUES (?, ?, ?)
-  `, [profileId, author, content], function(err) {
-    if (err) {
-      return res.status(400).json({ error: err.message });
-    }
+  try {
+    const insertStmt = db.prepare(`
+      INSERT INTO comments (profile_id, author, content)
+      VALUES (?, ?, ?)
+    `);
+
+    const result = insertStmt.run(profileId, author, content);
+
     res.status(201).json({
-      id: this.lastID,
+      id: result.lastInsertRowid,
       profile_id: profileId,
       author,
       content,
       created_at: new Date()
     });
-  });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
 });
 
 // Get profile image
 router.get('/:id/image', (req, res) => {
-  db.get('SELECT image FROM profiles WHERE id = ?', [req.params.id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const row = db.prepare('SELECT image FROM profiles WHERE id = ?').get(req.params.id);
+
     if (!row || !row.image) {
       return res.status(404).json({ message: 'Image not found' });
     }
+
     res.writeHead(200, {
       'Content-Type': 'image/jpeg',
       'Content-Length': row.image.length
     });
     res.end(row.image);
-  });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
