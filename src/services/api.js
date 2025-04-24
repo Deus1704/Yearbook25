@@ -1,8 +1,11 @@
 import axios from 'axios';
 
 // Use the correct URL based on the environment
-// When using the proxy in package.json, we can use a relative URL
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+// In production, use the deployed backend URL
+// In development, use the environment variable or default to the deployed URL
+const API_URL = process.env.NODE_ENV === 'production'
+  ? 'https://yearbook25-backend.onrender.com/api'
+  : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
 
 // Log the API URL for debugging
 console.log('API URL:', API_URL);
