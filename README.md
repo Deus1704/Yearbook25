@@ -1,6 +1,6 @@
 # Yearbook25 Frontend
 
-This repository contains the frontend code for the Yearbook25 application. It provides a user interface for viewing and interacting with profiles, messages, confessions, and memories.
+This repository contains the frontend-only code for the Yearbook25 application. It provides a user interface for viewing and interacting with profiles, messages, confessions, and memories.
 
 ## Technologies Used
 
@@ -23,9 +23,9 @@ This repository contains the frontend code for the Yearbook25 application. It pr
    npm install
    ```
 
-3. Create a `.env` file in the root directory with the following variables:
+3. Create a `.env` file in the root directory with the following variables to connect to the backend API:
    ```
-   REACT_APP_API_URL=http://localhost:5000/api
+   REACT_APP_API_URL=https://yearbook25-backend.onrender.com/api
    ```
 
 4. Start the development server:
@@ -33,7 +33,16 @@ This repository contains the frontend code for the Yearbook25 application. It pr
    npm start
    ```
 
-## Deployment to CPanel
+## Deployment Options
+
+### Vercel Deployment
+
+1. Push your code to GitHub
+2. Connect your GitHub repository to Vercel
+3. Vercel will automatically detect the React app and deploy it
+4. The `vercel.json` file in this repository configures the deployment settings
+
+### CPanel Deployment
 
 1. Build the application:
    ```
@@ -57,4 +66,4 @@ This repository contains the frontend code for the Yearbook25 application. It pr
 
 ## Backend Connection
 
-This frontend is configured to connect to the backend API deployed at https://yearbook25-backend.onrender.com/api. If you want to use a different backend URL, update the `API_URL` constant in `src/services/api.js`.
+This frontend is configured to connect to the backend API deployed at https://yearbook25-backend.onrender.com/api. If you want to use a different backend URL, update the `.env.production` file or the `API_URL` constant in `src/services/api.js`.

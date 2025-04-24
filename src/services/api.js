@@ -1,21 +1,43 @@
 import axios from 'axios';
 
 // Use the correct URL based on the environment
-// In production, use the deployed backend URL
+// In production, use the deployed backend URL from .env.production
 // In development, use the environment variable or default to the deployed URL
-const API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://yearbook25-backend.onrender.com/api'
-  : (process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+const API_URL = process.env.REACT_APP_API_URL || 'https://yearbook25-backend.onrender.com/api';
 
 // Log the API URL for debugging
 console.log('API URL:', API_URL);
 
 // Add a default timeout and error handling to axios
-axios.defaults.timeout = 10000; // 10 seconds
+axios.defaults.timeout = 15000; // 15 seconds to account for slower connections
+
+// Add request interceptor for common headers
+axios.interceptors.request.use(
+  config => {
+    // You can add common headers here if needed
+    return config;
+  },
+  error => {
+    console.error('Request Error:', error.message);
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
 axios.interceptors.response.use(
   response => response,
   error => {
-    console.error('API Error:', error.message);
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('API Error: No response received from server. Please check your connection.');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('API Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
