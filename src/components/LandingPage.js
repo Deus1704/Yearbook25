@@ -4,6 +4,7 @@ import { auth } from '../firebaseConfig';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import './LandingPage.css';
 import maprc_logo from '../assets/MAPRC.png';
+import backgroundVideo from '../assets/background.mp4';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const LandingPage = () => {
     <div className="landing-page">
       {/* Video Background */}
       <video autoPlay muted loop className="video-background">
-        <source src="/background.mp4" type="video/mp4" />
+        <source src={backgroundVideo} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
