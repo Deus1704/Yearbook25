@@ -1,99 +1,35 @@
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
-const db = new sqlite3.Database(path.join(__dirname, '../yearbook.db'));
+// Ensure the data directory exists for Vercel
+const dbDir = path.join(__dirname, '../data');
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbPath = path.join(dbDir, 'yearbook.db');
+const db = new Database(dbPath);
+
+console.log('Initializing database...');
 
 // Create tables
-db.serialize(() => {
-  console.log('Initializing database...');
-
+try {
   // Profiles table
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS profiles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT UNIQUE,
       name TEXT NOT NULL,
       designation TEXT NOT NULL,
       description TEXT NOT NULL,
       image BLOB,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-  `, function(err) {
-    if (err) {
-      console.error('Error creating profiles table:', err.message);
-      return;
-    }
-
-    // Check if user_id column exists
-    db.all("PRAGMA table_info(profiles)", [], (err, rows) => {
-      if (err) {
-        console.error('Error checking profiles table schema:', err.message);
-        return;
-      }
-
-      // Check if user_id column exists
-      const userIdExists = rows.some(row => row.name === 'user_id');
-
-      if (!userIdExists) {
-        console.log('Adding user_id column to profiles table...');
-        // Add user_id column if it doesn't exist (without UNIQUE constraint)
-        db.run(`ALTER TABLE profiles ADD COLUMN user_id TEXT`, (err) => {
-          if (err) {
-            console.error('Error adding user_id column:', err.message);
-          } else {
-            console.log('user_id column added successfully');
-
-            // Create a new table with the desired schema
-            db.run(`
-              CREATE TABLE IF NOT EXISTS profiles_new (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT UNIQUE,
-                name TEXT NOT NULL,
-                designation TEXT NOT NULL,
-                description TEXT NOT NULL,
-                image BLOB,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-              )
-            `, function(err) {
-              if (err) {
-                console.error('Error creating new profiles table:', err.message);
-                return;
-              }
-
-              // Copy data from old table to new table
-              db.run(`INSERT INTO profiles_new (id, user_id, name, designation, description, image, created_at)
-                      SELECT id, user_id, name, designation, description, image, created_at FROM profiles`, function(err) {
-                if (err) {
-                  console.error('Error copying profile data:', err.message);
-                  return;
-                }
-
-                // Rename tables to replace the old one with the new one
-                db.run(`DROP TABLE profiles`, function(err) {
-                  if (err) {
-                    console.error('Error dropping old profiles table:', err.message);
-                    return;
-                  }
-
-                  db.run(`ALTER TABLE profiles_new RENAME TO profiles`, function(err) {
-                    if (err) {
-                      console.error('Error renaming profiles table:', err.message);
-                    } else {
-                      console.log('Successfully migrated profiles table with UNIQUE constraint on user_id');
-                    }
-                  });
-                });
-              });
-            });
-          }
-        });
-      } else {
-        console.log('user_id column already exists in profiles table');
-      }
-    });
-  });
+  `);
 
   // Comments table
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS comments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       profile_id INTEGER,
@@ -105,7 +41,7 @@ db.serialize(() => {
   `);
 
   // Memories table
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS memories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
@@ -115,7 +51,7 @@ db.serialize(() => {
   `);
 
   // Confessions table
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS confessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       message TEXT NOT NULL,
@@ -126,7 +62,7 @@ db.serialize(() => {
   `);
 
   // Messages table (for general messages not tied to profiles)
-  db.run(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       author TEXT NOT NULL,
@@ -134,6 +70,10 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-});
+
+  console.log('Database tables created successfully');
+} catch (err) {
+  console.error('Error initializing database:', err.message);
+}
 
 module.exports = db;

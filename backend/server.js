@@ -6,10 +6,22 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
+// Configure CORS based on environment
+const corsOptions = {
   credentials: true
-}));
+};
+
+// In development, restrict to localhost origins
+if (process.env.NODE_ENV === 'development') {
+  corsOptions.origin = ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
+} else {
+  // In production, allow requests from the frontend domain
+  // You can specify your frontend domain here or use '*' to allow all domains
+  // Example: corsOptions.origin = 'https://your-frontend-domain.com';
+  corsOptions.origin = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
+}
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes

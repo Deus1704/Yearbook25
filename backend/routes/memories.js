@@ -10,8 +10,8 @@ const upload = multer({
 });
 
 // Ensure the memories table exists
-db.serialize(() => {
-  db.run(`
+try {
+  db.exec(`
     CREATE TABLE IF NOT EXISTS memories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
@@ -19,37 +19,37 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-});
+} catch (err) {
+  console.error('Error creating memories table:', err.message);
+}
 
 // Get all memory images
 router.get('/', (req, res) => {
-  db.all('SELECT id, name, created_at FROM memories ORDER BY created_at DESC', [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const rows = db.prepare('SELECT id, name, created_at FROM memories ORDER BY created_at DESC').all();
     res.json(rows || []);
-  });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Get a single memory image metadata
 router.get('/:id', (req, res) => {
-  db.get('SELECT id, name, created_at FROM memories WHERE id = ?', [req.params.id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const row = db.prepare('SELECT id, name, created_at FROM memories WHERE id = ?').get(req.params.id);
     if (!row) {
       return res.status(404).json({ message: 'Memory not found' });
     }
     res.json(row);
-  });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Get memory image file
 router.get('/:id/image', (req, res) => {
-  db.get('SELECT image FROM memories WHERE id = ?', [req.params.id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const row = db.prepare('SELECT image FROM memories WHERE id = ?').get(req.params.id);
     if (!row || !row.image) {
       return res.status(404).json({ message: 'Image not found' });
     }
@@ -58,7 +58,9 @@ router.get('/:id/image', (req, res) => {
       'Content-Length': row.image.length
     });
     res.end(row.image);
-  });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Upload a single memory image
@@ -70,21 +72,18 @@ router.post('/', upload.single('image'), (req, res) => {
   const name = req.body.name || null;
   const image = req.file.buffer;
 
-  db.run(
-    'INSERT INTO memories (name, image) VALUES (?, ?)',
-    [name, image],
-    function(err) {
-      if (err) {
-        return res.status(400).json({ error: err.message });
-      }
-      
-      res.status(201).json({
-        id: this.lastID,
-        name,
-        created_at: new Date().toISOString()
-      });
-    }
-  );
+  try {
+    const insertStmt = db.prepare('INSERT INTO memories (name, image) VALUES (?, ?)');
+    const result = insertStmt.run(name, image);
+
+    res.status(201).json({
+      id: result.lastInsertRowid,
+      name,
+      created_at: new Date().toISOString()
+    });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
 });
 
 // Upload multiple memory images
@@ -93,35 +92,33 @@ router.post('/batch', upload.array('image', 10), (req, res) => {
     return res.status(400).json({ error: 'At least one image is required' });
   }
 
-  const uploadedImages = [];
-  let completed = 0;
+  try {
+    const uploadedImages = [];
+    const insertStmt = db.prepare('INSERT INTO memories (name, image) VALUES (?, ?)');
 
-  req.files.forEach((file, index) => {
-    const name = req.body[`name-${index}`] || null;
-    const image = file.buffer;
+    // Use a transaction for better performance and atomicity
+    const transaction = db.transaction((files) => {
+      files.forEach((file, index) => {
+        const name = req.body[`name-${index}`] || null;
+        const image = file.buffer;
 
-    db.run(
-      'INSERT INTO memories (name, image) VALUES (?, ?)',
-      [name, image],
-      function(err) {
-        if (err) {
-          console.error('Error uploading image:', err);
-          // Continue with other images even if one fails
-        } else {
-          uploadedImages.push({
-            id: this.lastID,
-            name,
-            created_at: new Date().toISOString()
-          });
-        }
+        const result = insertStmt.run(name, image);
+        uploadedImages.push({
+          id: result.lastInsertRowid,
+          name,
+          created_at: new Date().toISOString()
+        });
+      });
+      return uploadedImages;
+    });
 
-        completed++;
-        if (completed === req.files.length) {
-          res.status(201).json(uploadedImages);
-        }
-      }
-    );
-  });
+    // Execute the transaction
+    const results = transaction(req.files);
+    res.status(201).json(results);
+  } catch (err) {
+    console.error('Error uploading images:', err);
+    return res.status(400).json({ error: err.message });
+  }
 });
 
 module.exports = router;

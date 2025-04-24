@@ -1,10 +1,24 @@
 import axios from 'axios';
 
 // Use the correct URL based on the environment
-// When using the proxy in package.json, we can use a relative URL
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+// When using the proxy in package.json, we can use a relative URL in development
+// In production, use the environment variable with the full backend URL
+let API_URL;
+
+if (process.env.NODE_ENV === 'production') {
+  // In production, always use the environment variable
+  API_URL = process.env.REACT_APP_API_URL;
+  if (!API_URL) {
+    console.warn('REACT_APP_API_URL is not set in production environment. Using default /api path.');
+    API_URL = '/api';
+  }
+} else {
+  // In development, use the environment variable or fall back to the proxy
+  API_URL = process.env.REACT_APP_API_URL || '/api';
+}
 
 // Log the API URL for debugging
+console.log('Environment:', process.env.NODE_ENV);
 console.log('API URL:', API_URL);
 
 // Add a default timeout and error handling to axios

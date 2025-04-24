@@ -3,8 +3,8 @@ const router = express.Router();
 const db = require('../models/database');
 
 // Ensure the confessions table exists
-db.serialize(() => {
-  db.run(`
+try {
+  db.exec(`
     CREATE TABLE IF NOT EXISTS confessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       message TEXT NOT NULL,
@@ -13,31 +13,33 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-});
+} catch (err) {
+  console.error('Error creating confessions table:', err.message);
+}
 
 // Get all confessions
 router.get('/', (req, res) => {
-  db.all('SELECT * FROM confessions ORDER BY created_at DESC', [], (err, rows) => {
-    if (err) {
-      console.error('Error fetching confessions:', err);
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const rows = db.prepare('SELECT * FROM confessions ORDER BY created_at DESC').all();
     // Return empty array if no rows found
     res.json(rows || []);
-  });
+  } catch (err) {
+    console.error('Error fetching confessions:', err);
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Get a single confession
 router.get('/:id', (req, res) => {
-  db.get('SELECT * FROM confessions WHERE id = ?', [req.params.id], (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
+  try {
+    const row = db.prepare('SELECT * FROM confessions WHERE id = ?').get(req.params.id);
     if (!row) {
       return res.status(404).json({ message: 'Confession not found' });
     }
     res.json(row);
-  });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // Create a new confession
@@ -49,50 +51,45 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    const params = [
-      message,
-      author || 'Anonymous',
-      recipient || null
-    ];
+    const authorValue = author || 'Anonymous';
+    const recipientValue = recipient || null;
 
-    db.run(
-      'INSERT INTO confessions (message, author, recipient) VALUES (?, ?, ?)',
-      params,
-      function(err) {
-        if (err) {
-          console.error('Error creating confession:', err);
-          return res.status(400).json({ error: err.message });
-        }
-
-        // Create a timestamp in ISO format
-        const now = new Date().toISOString();
-
-        res.status(201).json({
-          id: this.lastID,
-          message,
-          author: author || 'Anonymous',
-          recipient: recipient || null,
-          created_at: now
-        });
-      }
+    const insertStmt = db.prepare(
+      'INSERT INTO confessions (message, author, recipient) VALUES (?, ?, ?)'
     );
+
+    const result = insertStmt.run(message, authorValue, recipientValue);
+
+    // Create a timestamp in ISO format
+    const now = new Date().toISOString();
+
+    res.status(201).json({
+      id: result.lastInsertRowid,
+      message,
+      author: authorValue,
+      recipient: recipientValue,
+      created_at: now
+    });
   } catch (error) {
-    console.error('Unexpected error in confession creation:', error);
+    console.error('Error creating confession:', error);
     res.status(500).json({ error: 'An unexpected error occurred' });
   }
 });
 
 // Delete a confession
 router.delete('/:id', (req, res) => {
-  db.run('DELETE FROM confessions WHERE id = ?', [req.params.id], function(err) {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    if (this.changes === 0) {
+  try {
+    const deleteStmt = db.prepare('DELETE FROM confessions WHERE id = ?');
+    const result = deleteStmt.run(req.params.id);
+
+    if (result.changes === 0) {
       return res.status(404).json({ message: 'Confession not found' });
     }
+
     res.json({ message: 'Confession deleted successfully' });
-  });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
