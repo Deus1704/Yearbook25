@@ -1,0 +1,11 @@
+{
+  "name": "yearbook-api-proxy",
+  "version": "1.0.0",
+  "description": "CORS proxy for Yearbook25 API",
+  "main": "index.js",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
