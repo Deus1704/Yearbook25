@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Proxy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .response {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Yearbook25 CORS Proxy</h1>
+    <p>This page acts as a CORS proxy for the Yearbook25 API.</p>
+    <p>To use this proxy, make a POST request to this page with the following parameters:</p>
+    <ul>
+        <li><strong>url</strong>: The API endpoint URL you want to access</li>
+        <li><strong>method</strong>: The HTTP method (GET, POST, PUT, DELETE)</li>
+        <li><strong>data</strong>: The request body (for POST/PUT requests)</li>
+    </ul>
+    
+    <h2>Example Usage:</h2>
+    <pre>
+fetch('/yearbook/2025/cors-proxy.html', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        url: 'https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app/api/profiles',
+        method: 'GET'
+    })
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+    </pre>
+    
+    <div id="response" class="response"></div>
+
+    <script>
+        // Function to handle proxy requests
+        async function handleProxyRequest(request) {
+            try {
+                const { url, method = 'GET', data = null, headers = {} } = request;
+                
+                if (!url) {
+                    return { error: 'URL is required' };
+                }
+                
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...headers
+                    },
+                    mode: 'cors'
+                };
+                
+                // Add body for POST/PUT requests
+                if (['POST', 'PUT'].includes(method) && data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                // Make the request
+                const response = await fetch(url, options);
+                
+                // Parse response based on content type
+                const contentType = response.headers.get('content-type');
+                let responseData;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    responseData = await response.json();
+                } else if (contentType && contentType.includes('image/')) {
+                    // For image responses, return a data URL
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    return new Promise((resolve) => {
+                        reader.onloadend = () => resolve({
+                            dataUrl: reader.result,
+                            contentType: contentType
+                        });
+                        reader.readAsDataURL(blob);
+                    });
+                } else {
+                    responseData = await response.text();
+                }
+                
+                return {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: responseData
+                };
+            } catch (error) {
+                return {
+                    error: error.message,
+                    stack: error.stack
+                };
+            }
+        }
+        
+        // Handle form submissions
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if this is a POST request
+            if (window.location.search.includes('proxy=true')) {
+                // Get the request body
+                const requestBody = JSON.parse(decodeURIComponent(window.location.search.split('proxy=true&data=')[1]));
+                
+                // Handle the proxy request
+                handleProxyRequest(requestBody)
+                    .then(result => {
+                        document.getElementById('response').innerHTML = `
+                            <h3>Response:</h3>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        `;
+                    })
+                    .catch(error => {
+                        document.getElementById('response').innerHTML = `
+                            <h3>Error:</h3>
+                            <pre>${error.message}</pre>
+                        `;
+                    });
+            }
+        });
+        
+        // Handle fetch requests
+        window.addEventListener('fetch', async (event) => {
+            // Only handle POST requests to this page
+            if (event.request.method === 'POST' && event.request.url.includes('cors-proxy.html')) {
+                event.respondWith((async () => {
+                    try {
+                        const requestData = await event.request.json();
+                        const result = await handleProxyRequest(requestData);
+                        
+                        return new Response(JSON.stringify(result), {
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                    } catch (error) {
+                        return new Response(JSON.stringify({ error: error.message }), {
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                    }
+                })());
+            }
+        });
+    </script>
+</body>
+</html>

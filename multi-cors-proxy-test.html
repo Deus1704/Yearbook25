@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-CORS Proxy Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .method-button {
+            background-color: #2196F3;
+        }
+        .try-all-button {
+            background-color: #FF9800;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .result {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+        }
+        .current-method {
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Multi-CORS Proxy Test</h1>
+    <p>This page tests multiple CORS proxy methods for the Yearbook25 API.</p>
+    
+    <div>
+        <h2>Select Proxy Method</h2>
+        <button id="directMethod" class="method-button">Direct (No Proxy)</button>
+        <button id="localMethod" class="method-button">Local Proxy</button>
+        <button id="thirdPartyMethod" class="method-button">Third-Party Proxy</button>
+        <button id="jsonpMethod" class="method-button">JSONP (GET only)</button>
+        <button id="tryAllMethod" class="try-all-button">Try All Methods</button>
+        
+        <div id="currentMethod" class="current-method">
+            Current method: <span id="methodName">direct</span>
+        </div>
+    </div>
+    
+    <div>
+        <h2>Test API Endpoints</h2>
+        <button id="testProfiles">Test Profiles API</button>
+        <button id="testMessages">Test Messages API</button>
+        <button id="testConfessions">Test Confessions API</button>
+        <button id="testMemories">Test Memories API</button>
+    </div>
+    
+    <div id="result" class="result">
+        <p>Select a proxy method and click a button to test an API endpoint.</p>
+    </div>
+    
+    <script src="multi-cors-proxy.js"></script>
+    <script>
+        // Function to display results
+        function displayResult(data, error = null) {
+            const resultElement = document.getElementById('result');
+            
+            if (error) {
+                resultElement.innerHTML = `
+                    <h3 class="error">Error:</h3>
+                    <pre>${error}</pre>
+                `;
+            } else {
+                resultElement.innerHTML = `
+                    <h3>Result:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            }
+        }
+        
+        // Function to update the current method display
+        function updateMethodDisplay() {
+            document.getElementById('methodName').textContent = multiCorsProxy.getCurrentMethod();
+        }
+        
+        // Set up method buttons
+        document.getElementById('directMethod').addEventListener('click', () => {
+            multiCorsProxy.setProxyMethod(multiCorsProxy.PROXY_METHODS.DIRECT);
+            updateMethodDisplay();
+        });
+        
+        document.getElementById('localMethod').addEventListener('click', () => {
+            multiCorsProxy.setProxyMethod(multiCorsProxy.PROXY_METHODS.LOCAL);
+            updateMethodDisplay();
+        });
+        
+        document.getElementById('thirdPartyMethod').addEventListener('click', () => {
+            multiCorsProxy.setProxyMethod(multiCorsProxy.PROXY_METHODS.THIRD_PARTY);
+            updateMethodDisplay();
+        });
+        
+        document.getElementById('jsonpMethod').addEventListener('click', () => {
+            multiCorsProxy.setProxyMethod(multiCorsProxy.PROXY_METHODS.JSONP);
+            updateMethodDisplay();
+        });
+        
+        // Set up try all button
+        let tryingAllMethods = false;
+        document.getElementById('tryAllMethod').addEventListener('click', () => {
+            tryingAllMethods = true;
+            document.getElementById('methodName').textContent = 'trying all methods';
+        });
+        
+        // Test Profiles API
+        document.getElementById('testProfiles').addEventListener('click', async () => {
+            try {
+                displayResult('Loading profiles...');
+                
+                let profiles;
+                if (tryingAllMethods) {
+                    profiles = await multiCorsProxy.tryAllMethods('/profiles');
+                    tryingAllMethods = false;
+                    updateMethodDisplay();
+                } else {
+                    profiles = await multiCorsProxy.getProfiles();
+                }
+                
+                displayResult(profiles);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+        
+        // Test Messages API
+        document.getElementById('testMessages').addEventListener('click', async () => {
+            try {
+                displayResult('Loading messages...');
+                
+                let messages;
+                if (tryingAllMethods) {
+                    messages = await multiCorsProxy.tryAllMethods('/messages');
+                    tryingAllMethods = false;
+                    updateMethodDisplay();
+                } else {
+                    messages = await multiCorsProxy.getMessages();
+                }
+                
+                displayResult(messages);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+        
+        // Test Confessions API
+        document.getElementById('testConfessions').addEventListener('click', async () => {
+            try {
+                displayResult('Loading confessions...');
+                
+                let confessions;
+                if (tryingAllMethods) {
+                    confessions = await multiCorsProxy.tryAllMethods('/confessions');
+                    tryingAllMethods = false;
+                    updateMethodDisplay();
+                } else {
+                    confessions = await multiCorsProxy.getConfessions();
+                }
+                
+                displayResult(confessions);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+        
+        // Test Memories API
+        document.getElementById('testMemories').addEventListener('click', async () => {
+            try {
+                displayResult('Loading memories...');
+                
+                let memories;
+                if (tryingAllMethods) {
+                    memories = await multiCorsProxy.tryAllMethods('/memories');
+                    tryingAllMethods = false;
+                    updateMethodDisplay();
+                } else {
+                    memories = await multiCorsProxy.getMemories();
+                }
+                
+                displayResult(memories);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+    </script>
+</body>
+</html>

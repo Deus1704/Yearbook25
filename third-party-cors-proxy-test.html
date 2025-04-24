@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Third-Party CORS Proxy Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .result {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Third-Party CORS Proxy Test</h1>
+    <p>This page tests the third-party CORS proxy for the Yearbook25 API.</p>
+    <p>This solution uses <a href="https://corsproxy.io/" target="_blank">corsproxy.io</a> to bypass CORS restrictions.</p>
+    
+    <div>
+        <h2>Test API Endpoints</h2>
+        <button id="testProfiles">Test Profiles API</button>
+        <button id="testMessages">Test Messages API</button>
+        <button id="testConfessions">Test Confessions API</button>
+        <button id="testMemories">Test Memories API</button>
+    </div>
+    
+    <div id="result" class="result">
+        <p>Click a button to test an API endpoint.</p>
+    </div>
+    
+    <script src="third-party-cors-proxy.js"></script>
+    <script>
+        // Function to display results
+        function displayResult(data, error = null) {
+            const resultElement = document.getElementById('result');
+            
+            if (error) {
+                resultElement.innerHTML = `
+                    <h3 class="error">Error:</h3>
+                    <pre>${error}</pre>
+                `;
+            } else {
+                resultElement.innerHTML = `
+                    <h3>Result:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            }
+        }
+        
+        // Test Profiles API
+        document.getElementById('testProfiles').addEventListener('click', async () => {
+            try {
+                displayResult('Loading profiles...');
+                const profiles = await thirdPartyCorsProxy.getProfiles();
+                displayResult(profiles);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+        
+        // Test Messages API
+        document.getElementById('testMessages').addEventListener('click', async () => {
+            try {
+                displayResult('Loading messages...');
+                const messages = await thirdPartyCorsProxy.getMessages();
+                displayResult(messages);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+        
+        // Test Confessions API
+        document.getElementById('testConfessions').addEventListener('click', async () => {
+            try {
+                displayResult('Loading confessions...');
+                const confessions = await thirdPartyCorsProxy.getConfessions();
+                displayResult(confessions);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+        
+        // Test Memories API
+        document.getElementById('testMemories').addEventListener('click', async () => {
+            try {
+                displayResult('Loading memories...');
+                const memories = await thirdPartyCorsProxy.getMemories();
+                displayResult(memories);
+            } catch (error) {
+                displayResult(null, error.message);
+            }
+        });
+    </script>
+</body>
+</html>
