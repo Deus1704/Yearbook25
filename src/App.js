@@ -1,8 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import './App.css';
 import Home from './components/Home';
-import GoogleSignIn from './components/GoogleSignIn';
 import Profile from './components/Profile';
 import Gallery from './components/Gallery';
 import Team from './components/Team';
@@ -16,10 +15,13 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import LandingPage from './components/LandingPage';
 
+// Get the base URL from the homepage in package.json
+const BASE_PATH = process.env.PUBLIC_URL || '';
+
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename={BASE_PATH}>
         <Routes>
           {/* Public route - Login */}
           <Route path="/login" element={<LandingPage />} />

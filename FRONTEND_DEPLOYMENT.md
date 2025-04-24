@@ -2,6 +2,19 @@
 
 This guide explains how to deploy the Yearbook25 frontend to various hosting platforms.
 
+## Base Path
+
+This application is configured to run under the base path `/yearbook/2025/`. This means all URLs will be prefixed with this path, for example:
+- `/yearbook/2025/login`
+- `/yearbook/2025/gallery`
+- etc.
+
+The configuration for this base path is set in several places:
+- `package.json`: The `homepage` field is set to `/yearbook/2025`
+- `App.js`: The Router uses `basename={process.env.PUBLIC_URL}` to set the base path
+- `vercel.json`: Routes are configured to handle the base path
+- `public/.htaccess`: RewriteBase is set to `/yearbook/2025/` for CPanel deployment
+
 ## Prerequisites
 
 Before deploying, make sure you have:

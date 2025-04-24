@@ -31,6 +31,7 @@ const Navbardesk = () => {
     try {
       await signOut(auth);
       localStorage.removeItem('user');
+      // Use the correct path with the base URL
       navigate('/login');
     } catch (error) {
       console.error('Error signing out:', error);

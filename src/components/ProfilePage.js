@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
-import { useNavigate, useParams } from 'react-router-dom';
 import './ProfilePage.css';
 import ProfileCard from './ProfileCard';
 import ProfileDetail from './ProfileDetail';
 import Navbardesk from './Navbar';
 
 const ProfilePage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {

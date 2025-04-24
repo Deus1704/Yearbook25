@@ -5,37 +5,43 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "build"
+        "distDir": "build",
+        "buildCommand": "CI=false npm run build"
       }
     }
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
+      "src": "/",
+      "status": 308,
+      "headers": { "Location": "/yearbook/2025" }
+    },
+    {
+      "src": "/yearbook/2025/static/(.*)",
       "dest": "/static/$1"
     },
     {
-      "src": "/favicon.ico",
+      "src": "/yearbook/2025/favicon.ico",
       "dest": "/favicon.ico"
     },
     {
-      "src": "/logo192.png",
+      "src": "/yearbook/2025/logo192.png",
       "dest": "/logo192.png"
     },
     {
-      "src": "/logo512.png",
+      "src": "/yearbook/2025/logo512.png",
       "dest": "/logo512.png"
     },
     {
-      "src": "/manifest.json",
+      "src": "/yearbook/2025/manifest.json",
       "dest": "/manifest.json"
     },
     {
-      "src": "/robots.txt",
+      "src": "/yearbook/2025/robots.txt",
       "dest": "/robots.txt"
     },
     {
-      "src": "/(.*)",
+      "src": "/yearbook/2025/(.*)",
       "dest": "/index.html"
     }
   ]
