@@ -14,11 +14,6 @@ axios.defaults.timeout = 15000; // 15 seconds to account for slower connections
 // Add request interceptor for common headers
 axios.interceptors.request.use(
   config => {
-    // Add CORS headers
-    config.headers['Access-Control-Allow-Origin'] = '*';
-    config.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
-    config.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
-
     // Log the request for debugging
     console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`);
 
