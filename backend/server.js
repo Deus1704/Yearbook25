@@ -11,7 +11,13 @@ const app = express();
 // Middleware
 // Configure CORS - more permissive configuration
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL || 'https://students.iitgn.ac.in', 'https://students.iitgn.ac.in', 'https://students.iitgn.ac.in/yearbook/2025', 'https://yearbook25.vercel.app']
+  ? [
+      process.env.FRONTEND_URL || 'https://students.iitgn.ac.in',
+      'https://students.iitgn.ac.in',
+      'https://students.iitgn.ac.in/yearbook/2025',
+      'https://yearbook25.vercel.app',
+      'https://corsproxy.io'
+    ]
   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
 // Enable CORS for all routes
@@ -25,7 +31,13 @@ app.use(cors({
       return callback(null, true);
     }
 
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+    // Check if the origin is from corsproxy.io
+    if (origin && origin.includes('corsproxy.io')) {
+      console.log('Allowing corsproxy.io request:', origin);
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
@@ -35,7 +47,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Date', 'X-Api-Version']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Date', 'X-Api-Version', 'Origin']
 }));
 
 // Handle preflight requests
@@ -48,6 +60,10 @@ app.use((req, res, next) => {
   // For development or debugging, you can allow all origins
   if (process.env.CORS_ALLOW_ALL === 'true') {
     res.header('Access-Control-Allow-Origin', '*');
+  } else if (origin && origin.includes('corsproxy.io')) {
+    // Allow corsproxy.io requests
+    console.log('Setting CORS headers for corsproxy.io request:', origin);
+    res.header('Access-Control-Allow-Origin', origin);
   } else if (origin && allowedOrigins.includes(origin)) {
     // Set the specific origin that made the request
     res.header('Access-Control-Allow-Origin', origin);
@@ -56,9 +72,13 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
   }
 
+  // Set Vary header to indicate that the response varies based on Origin
+  res.header('Vary', 'Origin');
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version, Origin');
   res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -153,11 +173,13 @@ const profileRoutes = require('./routes/profiles');
 const confessionRoutes = require('./routes/confessions');
 const messageRoutes = require('./routes/messages');
 const memoryRoutes = require('./routes/memories');
+const corsProxyRoutes = require('./routes/cors-proxy');
 
 app.use('/api/profiles', profileRoutes);
 app.use('/api/confessions', confessionRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/memories', memoryRoutes);
+app.use('/api/cors-proxy', corsProxyRoutes);
 
 const PORT = process.env.PORT || 5000;
 
