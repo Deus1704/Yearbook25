@@ -25,12 +25,29 @@ axios.interceptors.request.use(
 
 // Add response interceptor for error handling
 axios.interceptors.response.use(
-  response => response,
+  response => {
+    // Handle MongoDB data format if needed
+    if (response.data && Array.isArray(response.data)) {
+      // If it's an array, ensure each item has an id property (MongoDB uses _id)
+      response.data.forEach(item => {
+        if (item._id && !item.id) {
+          item.id = item._id;
+        }
+      });
+    } else if (response.data && response.data._id && !response.data.id) {
+      // If it's a single object with _id but no id
+      response.data.id = response.data._id;
+    }
+    return response;
+  },
   error => {
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      if (error.response.data && error.response.data.error) {
+        console.error('Error details:', error.response.data.error);
+      }
     } else if (error.request) {
       // The request was made but no response was received
       console.error('API Error: No response received from server. Please check your connection.');
