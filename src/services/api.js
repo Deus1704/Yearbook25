@@ -132,8 +132,15 @@ export const updateProfile = async (id, profileData) => {
   return response.data;
 };
 
-// Helper function to get image URL
-export const getProfileImageUrl = (id) => `${API_URL}/profiles/${id}/image`;
+// Helper function to get profile image URL
+export const getProfileImageUrl = (id, directUrl = null) => {
+  // If a direct URL is provided (from Google Drive), use it
+  if (directUrl) {
+    return directUrl;
+  }
+  // Otherwise, use the API endpoint
+  return `${API_URL}/profiles/${id}/image`;
+};
 
 // Confession related API calls
 export const getConfessions = async () => {
@@ -213,4 +220,11 @@ export const uploadMultipleMemoryImages = async (imageFiles) => {
 };
 
 // Helper function to get memory image URL
-export const getMemoryImageUrl = (id) => `${API_URL}/memories/${id}/image`;
+export const getMemoryImageUrl = (id, directUrl = null) => {
+  // If a direct URL is provided (from Google Drive), use it
+  if (directUrl) {
+    return directUrl;
+  }
+  // Otherwise, use the API endpoint
+  return `${API_URL}/memories/${id}/image`;
+};

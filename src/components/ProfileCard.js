@@ -75,7 +75,7 @@ const ProfileCard = () => {
             >
               <div className="profile-card-item">
                 <Card.Img
-                  src={getProfileImageUrl(profile.id)}
+                  src={getProfileImageUrl(profile.id, profile.image_url)}
                   className="profile-img"
                   onError={(e) => {
                     e.target.onerror = null;

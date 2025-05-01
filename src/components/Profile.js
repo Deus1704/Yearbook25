@@ -67,7 +67,7 @@ const Profile = () => {
       </Link>
       <div className="profile-card1">
         <img
-          src={getProfileImageUrl(profile.id)}
+          src={getProfileImageUrl(profile.id, profile.image_url)}
           alt={profile.name}
           className="profile-image1"
           onError={(e) => {
