@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/cors-proxy.js",
+      "src": "server.js",
       "use": "@vercel/node",
       "config": {
         "memory": 1024,
@@ -12,17 +12,26 @@
   ],
   "routes": [
     {
+      "src": "/cors-test",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/api/cors-debug",
+      "dest": "/server.js"
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "/api/cors-proxy.js"
+      "dest": "/server.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/api/cors-proxy.js"
+      "dest": "/server.js"
     }
   ],
   "env": {
     "NODE_ENV": "production",
-    "FRONTEND_URL": "https://students.iitgn.ac.in"
+    "FRONTEND_URL": "https://students.iitgn.ac.in",
+    "CORS_ALLOW_ALL": "true"
   },
   "headers": [
     {

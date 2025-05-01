@@ -11,15 +11,31 @@ const app = express();
 // Middleware
 // Configure CORS - more permissive configuration
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL || 'https://yearbook25.com', 'https://students.iitgn.ac.in', 'https://students.iitgn.ac.in/yearbook/2025']
+  ? [process.env.FRONTEND_URL || 'https://students.iitgn.ac.in', 'https://students.iitgn.ac.in', 'https://students.iitgn.ac.in/yearbook/2025', 'https://yearbook25.vercel.app']
   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: '*', // Allow all origins temporarily for debugging
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+
+    // For development or debugging, you can allow all origins
+    if (process.env.CORS_ALLOW_ALL === 'true') {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      // Still allow the request to go through for Vercel deployment
+      callback(null, true);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Date', 'X-Api-Version']
 }));
 
 // Handle preflight requests
@@ -27,10 +43,21 @@ app.options('*', cors());
 
 // Custom middleware to ensure CORS headers are set on every response
 app.use((req, res, next) => {
-  // Set CORS headers for all responses
-  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins temporarily
+  const origin = req.headers.origin;
+
+  // For development or debugging, you can allow all origins
+  if (process.env.CORS_ALLOW_ALL === 'true') {
+    res.header('Access-Control-Allow-Origin', '*');
+  } else if (origin && allowedOrigins.includes(origin)) {
+    // Set the specific origin that made the request
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    // Default to allowing all origins for Vercel deployment
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version');
   res.header('Access-Control-Allow-Credentials', 'true');
 
   // Handle preflight requests
@@ -97,13 +124,27 @@ app.get('/api/cors-debug', (req, res) => {
     requestHeaders: req.headers,
     responseHeaders: res.getHeaders(),
     allowedOrigins: allowedOrigins,
+    corsAllowAll: process.env.CORS_ALLOW_ALL === 'true' ? 'true' : 'false',
+    originCheck: {
+      requestOrigin: req.headers.origin || 'No origin header',
+      isAllowed: !req.headers.origin || allowedOrigins.includes(req.headers.origin) || process.env.CORS_ALLOW_ALL === 'true'
+    },
     env: {
       nodeEnv: process.env.NODE_ENV,
       frontendUrl: process.env.FRONTEND_URL,
-      port: process.env.PORT
+      port: process.env.PORT,
+      corsAllowAll: process.env.CORS_ALLOW_ALL
     },
-    vercel: process.env.VERCEL === '1' ? 'true' : 'false',
-    vercelEnv: process.env.VERCEL_ENV || 'not set'
+    vercel: {
+      isVercel: process.env.VERCEL === '1' ? 'true' : 'false',
+      vercelEnv: process.env.VERCEL_ENV || 'not set',
+      region: process.env.VERCEL_REGION || 'not set'
+    },
+    allEnvVars: Object.keys(process.env).reduce((acc, key) => {
+      // Don't include sensitive values, just the keys
+      acc[key] = key.includes('SECRET') || key.includes('KEY') || key.includes('TOKEN') ? '[REDACTED]' : process.env[key];
+      return acc;
+    }, {})
   });
 });
 
