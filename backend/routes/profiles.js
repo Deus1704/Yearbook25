@@ -98,7 +98,33 @@ router.post('/', upload.single('image'), async (req, res) => {
         console.log('Image uploaded to Google Drive with ID:', imageId);
       } catch (uploadError) {
         console.error('Error uploading image to Google Drive:', uploadError);
-        // Continue without image if upload fails
+        console.log('Storing image in database directly as fallback');
+
+        // Store the image directly in the database as a fallback
+        try {
+          // Create a new profile with the image stored directly
+          const result = db.run(
+            'INSERT INTO profiles (name, designation, description, image, user_id) VALUES (?, ?, ?, ?, ?)',
+            [name, designation, description, imageFile.buffer, user_id]
+          );
+
+          const newId = result.lastInsertRowid;
+          console.log('Profile created with ID (using direct image storage):', newId);
+
+          res.status(201).json({
+            id: newId,
+            name,
+            designation,
+            description,
+            user_id
+          });
+
+          // Return early since we've already handled the response
+          return;
+        } catch (dbError) {
+          console.error('Error storing image directly in database:', dbError);
+          // Continue without image if both methods fail
+        }
       }
     }
 
@@ -231,10 +257,11 @@ router.post('/:id/comments', async (req, res) => {
 // Get profile image
 router.get('/:id/image', async (req, res) => {
   try {
-    const profile = db.get('SELECT image_id, image_url FROM profiles WHERE id = ?', [req.params.id]);
+    // First check if we have Google Drive info
+    const profile = db.get('SELECT image_id, image_url, image FROM profiles WHERE id = ?', [req.params.id]);
 
-    if (!profile || (!profile.image_id && !profile.image_url)) {
-      return res.status(404).json({ message: 'Image not found' });
+    if (!profile) {
+      return res.status(404).json({ message: 'Profile not found' });
     }
 
     // If we have a direct URL to the image, redirect to it
@@ -242,19 +269,36 @@ router.get('/:id/image', async (req, res) => {
       return res.redirect(profile.image_url);
     }
 
-    // Otherwise, fetch the image from Google Drive
-    try {
-      const file = await fileStorage.getProfileImage(profile.image_id);
+    // If we have a Google Drive image ID, try to fetch it
+    if (profile.image_id) {
+      try {
+        const file = await fileStorage.getProfileImage(profile.image_id);
 
-      res.writeHead(200, {
-        'Content-Type': file.metadata.mimeType || 'image/jpeg',
-        'Content-Length': file.content.length
-      });
-      res.end(file.content);
-    } catch (driveError) {
-      console.error('Error fetching image from Google Drive:', driveError);
-      return res.status(500).json({ error: 'Error fetching image from Google Drive' });
+        res.writeHead(200, {
+          'Content-Type': file.metadata.mimeType || 'image/jpeg',
+          'Content-Length': file.content.length
+        });
+        res.end(file.content);
+        return;
+      } catch (driveError) {
+        console.error('Error fetching image from Google Drive:', driveError);
+        console.log('Falling back to database image if available');
+        // Fall through to check for database image
+      }
     }
+
+    // If we have an image stored directly in the database, use that
+    if (profile.image) {
+      res.writeHead(200, {
+        'Content-Type': 'image/jpeg',
+        'Content-Length': profile.image.length
+      });
+      res.end(profile.image);
+      return;
+    }
+
+    // If we get here, we don't have any image
+    return res.status(404).json({ message: 'Image not found' });
   } catch (err) {
     console.error('Error getting profile image:', err);
     return res.status(500).json({ error: err.message });

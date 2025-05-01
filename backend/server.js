@@ -226,8 +226,11 @@ async function startServer() {
     // Start the server
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
+    console.error('Failed to initialize with Google Drive:', err);
+    console.log('Starting server in basic mode without Google Drive integration...');
+
+    // Start the server anyway without Google Drive
+    app.listen(PORT, () => console.log(`Server running on port ${PORT} (basic mode)`));
   }
 }
 

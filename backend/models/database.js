@@ -79,9 +79,14 @@ class Database {
 
       console.log('Database tables created successfully');
 
-      // Initialize file storage
-      await fileStorage.initFileStorage();
-      console.log('File storage initialized successfully');
+      // Try to initialize file storage, but continue if it fails
+      try {
+        await fileStorage.initFileStorage();
+        console.log('File storage initialized successfully');
+      } catch (fileStorageErr) {
+        console.error('Warning: File storage initialization failed:', fileStorageErr.message);
+        console.log('Database will operate without Google Drive integration');
+      }
     } catch (err) {
       console.error('Error initializing database:', err.message);
       throw err;
