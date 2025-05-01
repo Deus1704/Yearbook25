@@ -7,14 +7,48 @@ require('dotenv').config();
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 const CREDENTIALS_PATH = path.join(__dirname, '../credentials.json');
 
-// Create a new JWT client using the service account credentials
-const auth = new google.auth.GoogleAuth({
-  keyFile: CREDENTIALS_PATH,
-  scopes: SCOPES,
-});
+// Function to get auth client
+function getAuthClient() {
+  // Check if credentials are provided as an environment variable
+  if (process.env.GOOGLE_CREDENTIALS) {
+    try {
+      // Parse the credentials from the environment variable
+      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
 
-// Create a Google Drive client
-const drive = google.drive({ version: 'v3', auth });
+      // Create a JWT client using the credentials from environment variable
+      return new google.auth.GoogleAuth({
+        credentials,
+        scopes: SCOPES,
+      });
+    } catch (error) {
+      console.error('Error parsing GOOGLE_CREDENTIALS environment variable:', error.message);
+      console.log('Falling back to credentials.json file');
+    }
+  }
+
+  // Fall back to credentials file if environment variable is not available or invalid
+  if (fs.existsSync(CREDENTIALS_PATH)) {
+    return new google.auth.GoogleAuth({
+      keyFile: CREDENTIALS_PATH,
+      scopes: SCOPES,
+    });
+  }
+
+  // If neither is available, throw an error
+  throw new Error('No Google Drive credentials found. Please provide credentials.json file or GOOGLE_CREDENTIALS environment variable.');
+}
+
+// Try to create auth client
+let auth;
+let drive;
+
+try {
+  auth = getAuthClient();
+  // Create a Google Drive client
+  drive = google.drive({ version: 'v3', auth });
+} catch (error) {
+  console.error('Failed to initialize Google Drive client:', error.message);
+}
 
 // Folder ID for the Yearbook25 application
 const YEARBOOK_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
@@ -25,6 +59,11 @@ const YEARBOOK_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
  */
 async function initGoogleDrive() {
   try {
+    // Check if drive client is initialized
+    if (!drive) {
+      throw new Error('Google Drive client not initialized. Check your credentials.');
+    }
+
     // Check if the main folder exists
     if (!YEARBOOK_FOLDER_ID) {
       // Create the main folder
@@ -61,6 +100,11 @@ async function initGoogleDrive() {
  */
 async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FOLDER_ID) {
   try {
+    // Check if drive client is initialized
+    if (!drive) {
+      throw new Error('Google Drive client not initialized. Check your credentials.');
+    }
+
     // File metadata
     const fileMetadata = {
       name: fileName,
@@ -104,6 +148,11 @@ async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FO
  */
 async function getFile(fileId) {
   try {
+    // Check if drive client is initialized
+    if (!drive) {
+      throw new Error('Google Drive client not initialized. Check your credentials.');
+    }
+
     // Get the file metadata
     const file = await drive.files.get({
       fileId: fileId,
@@ -133,6 +182,11 @@ async function getFile(fileId) {
  */
 async function deleteFile(fileId) {
   try {
+    // Check if drive client is initialized
+    if (!drive) {
+      throw new Error('Google Drive client not initialized. Check your credentials.');
+    }
+
     await drive.files.delete({
       fileId: fileId,
     });
@@ -153,6 +207,11 @@ async function deleteFile(fileId) {
  */
 async function createFolder(folderName, parentFolderId = YEARBOOK_FOLDER_ID) {
   try {
+    // Check if drive client is initialized
+    if (!drive) {
+      throw new Error('Google Drive client not initialized. Check your credentials.');
+    }
+
     const folderMetadata = {
       name: folderName,
       mimeType: 'application/vnd.google-apps.folder',
@@ -179,6 +238,11 @@ async function createFolder(folderName, parentFolderId = YEARBOOK_FOLDER_ID) {
  */
 async function listFiles(folderId = YEARBOOK_FOLDER_ID) {
   try {
+    // Check if drive client is initialized
+    if (!drive) {
+      throw new Error('Google Drive client not initialized. Check your credentials.');
+    }
+
     const response = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields: 'files(id, name, mimeType, webViewLink, webContentLink)',
