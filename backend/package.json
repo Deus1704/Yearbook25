@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "prepare-render": "node scripts/prepare-render-deployment.js",
+    "postinstall": "npm run prepare-render || true"
   },
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
@@ -13,6 +15,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "googleapis": "^129.0.0",
     "multer": "^1.4.5-lts.1",
     "sql.js": "^1.8.0"
   },

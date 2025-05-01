@@ -162,6 +162,11 @@ app.get('/api/cors-debug', (req, res) => {
       port: process.env.PORT,
       corsAllowAll: process.env.CORS_ALLOW_ALL
     },
+    render: {
+      isRender: process.env.RENDER === 'true' ? 'true' : 'false',
+      renderService: process.env.RENDER_SERVICE_NAME || 'not set',
+      renderRegion: process.env.RENDER_REGION || 'not set'
+    },
     vercel: {
       isVercel: process.env.VERCEL === '1' ? 'true' : 'false',
       vercelEnv: process.env.VERCEL_ENV || 'not set',
@@ -172,6 +177,28 @@ app.get('/api/cors-debug', (req, res) => {
       acc[key] = key.includes('SECRET') || key.includes('KEY') || key.includes('TOKEN') ? '[REDACTED]' : process.env[key];
       return acc;
     }, {})
+  });
+});
+
+// Add a simple CORS test endpoint
+app.get('/cors-test', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'CORS test successful',
+    timestamp: new Date().toISOString(),
+    origin: req.headers.origin || 'No origin header',
+    host: req.headers.host,
+    method: req.method
+  });
+});
+
+// Add a root endpoint for health checks
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Yearbook25 API is running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
   });
 });
 
