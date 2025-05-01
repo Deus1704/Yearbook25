@@ -3,7 +3,7 @@ import axios from 'axios';
 // Use the correct URL based on the environment
 // In production, use the deployed backend URL from .env.production
 // In development, use the environment variable or default to the deployed URL
-const API_URL = process.env.REACT_APP_API_URL || 'https://yearbook25-backend.onrender.com/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://yearbook25-xb9a.onrender.com/api';
 
 // Log the API URL for debugging
 console.log('API URL:', API_URL);
@@ -14,7 +14,14 @@ axios.defaults.timeout = 15000; // 15 seconds to account for slower connections
 // Add request interceptor for common headers
 axios.interceptors.request.use(
   config => {
-    // You can add common headers here if needed
+    // Add CORS headers
+    config.headers['Access-Control-Allow-Origin'] = '*';
+    config.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+    config.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
+
+    // Log the request for debugging
+    console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`);
+
     return config;
   },
   error => {
@@ -26,6 +33,9 @@ axios.interceptors.request.use(
 // Add response interceptor for error handling
 axios.interceptors.response.use(
   response => {
+    // Log successful responses for debugging
+    console.log(`API Success: ${response.config.method.toUpperCase()} ${response.config.url}`, response.status);
+
     // Handle MongoDB data format if needed
     if (response.data && Array.isArray(response.data)) {
       // If it's an array, ensure each item has an id property (MongoDB uses _id)
@@ -45,15 +55,24 @@ axios.interceptors.response.use(
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+      console.error(`Failed request: ${error.config.method.toUpperCase()} ${error.config.url}`);
+
       if (error.response.data && error.response.data.error) {
         console.error('Error details:', error.response.data.error);
+      } else {
+        // Try to log the raw response data for debugging
+        console.error('Response data:', error.response.data);
       }
     } else if (error.request) {
       // The request was made but no response was received
       console.error('API Error: No response received from server. Please check your connection.');
+      console.error(`Failed request: ${error.config.method.toUpperCase()} ${error.config.url}`);
     } else {
       // Something happened in setting up the request that triggered an Error
       console.error('API Error:', error.message);
+      if (error.config) {
+        console.error(`Failed request: ${error.config.method.toUpperCase()} ${error.config.url}`);
+      }
     }
     return Promise.reject(error);
   }
