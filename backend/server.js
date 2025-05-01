@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const multer = require('multer');
 require('dotenv').config();
 
@@ -15,68 +14,16 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
       process.env.FRONTEND_URL || 'https://students.iitgn.ac.in',
       'https://students.iitgn.ac.in',
       'https://students.iitgn.ac.in/yearbook/2025',
+      'https://students.iitgn.ac.in/yearbook',
+      'https://yearbook25-xb9a.onrender.com',
     ]
   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
-// Enable CORS for all routes
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
-    if (!origin) return callback(null, true);
-
-    // For development or debugging, you can allow all origins
-    if (process.env.CORS_ALLOW_ALL === 'true') {
-      return callback(null, true);
-    }
-
-    // Check if the origin is from corsproxy.io
-    if (origin && origin.includes('corsproxy.io')) {
-      console.log('Allowing corsproxy.io request:', origin);
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      // Still allow the request to go through for Vercel deployment
-      callback(null, true);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Date', 'X-Api-Version', 'Origin']
-}));
-
-// Handle preflight requests
-app.options('*', cors());
-
-// Custom middleware to ensure CORS headers are set on every response
+// Simple CORS middleware that allows all origins and handles preflight requests
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  // For development or debugging, you can allow all origins
-  if (process.env.CORS_ALLOW_ALL === 'true') {
-    res.header('Access-Control-Allow-Origin', '*');
-  } else if (origin && origin.includes('corsproxy.io')) {
-    // Allow corsproxy.io requests
-    console.log('Setting CORS headers for corsproxy.io request:', origin);
-    res.header('Access-Control-Allow-Origin', origin);
-  } else if (origin && allowedOrigins.includes(origin)) {
-    // Set the specific origin that made the request
-    res.header('Access-Control-Allow-Origin', origin);
-  } else {
-    // Default to allowing all origins for Vercel deployment
-    res.header('Access-Control-Allow-Origin', '*');
-  }
-
-  // Set Vary header to indicate that the response varies based on Origin
-  res.header('Vary', 'Origin');
-
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version, Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -87,14 +34,14 @@ app.use((req, res, next) => {
 });
 
 // Add a middleware to log all requests for debugging
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   console.log('Headers:', JSON.stringify(req.headers));
   next();
 });
 
 // Add a middleware to bypass authentication for public endpoints
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   // List of paths that should be publicly accessible
   const publicPaths = [
     '/cors-test',
@@ -119,7 +66,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // Add a simple health check endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({ status: 'ok', message: 'Yearbook25 API is running' });
 });
 
@@ -183,15 +130,7 @@ app.get('/cors-test', (req, res) => {
   });
 });
 
-// Add a root endpoint for health checks
-app.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'Yearbook25 API is running',
-    version: '1.0.0',
-    timestamp: new Date().toISOString()
-  });
-});
+
 
 // Routes
 const profileRoutes = require('./routes/profiles');
