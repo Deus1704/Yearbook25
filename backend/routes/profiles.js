@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const db = require('../models/database');
+const fileStorage = require('../services/fileStorage');
 
 // Multer configuration for handling file uploads
 const upload = multer({
@@ -66,7 +67,7 @@ router.get('/user/:userId', async (req, res) => {
 // Create new profile
 router.post('/', upload.single('image'), async (req, res) => {
   const { name, designation, description, user_id } = req.body;
-  const image = req.file ? req.file.buffer : null;
+  const imageFile = req.file;
 
   console.log('Creating profile with user_id:', user_id);
 
@@ -85,10 +86,26 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     console.log('Creating new profile for user');
 
+    let imageId = null;
+    let imageUrl = null;
+
+    // Upload image to Google Drive if provided
+    if (imageFile) {
+      try {
+        const uploadResult = await fileStorage.uploadProfileImage(imageFile.buffer, user_id);
+        imageId = uploadResult.fileId;
+        imageUrl = uploadResult.webContentLink;
+        console.log('Image uploaded to Google Drive with ID:', imageId);
+      } catch (uploadError) {
+        console.error('Error uploading image to Google Drive:', uploadError);
+        // Continue without image if upload fails
+      }
+    }
+
     // Create new profile if user doesn't have one
     const result = db.run(
-      'INSERT INTO profiles (name, designation, description, image, user_id) VALUES (?, ?, ?, ?, ?)',
-      [name, designation, description, image, user_id]
+      'INSERT INTO profiles (name, designation, description, image_id, image_url, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, designation, description, imageId, imageUrl, user_id]
     );
 
     const newId = result.lastInsertRowid;
@@ -100,6 +117,7 @@ router.post('/', upload.single('image'), async (req, res) => {
       name,
       designation,
       description,
+      image_url: imageUrl,
       user_id
     });
   } catch (err) {
@@ -112,7 +130,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 router.put('/:id', upload.single('image'), async (req, res) => {
   const { name, designation, description, user_id } = req.body;
   const profileId = req.params.id;
-  const image = req.file ? req.file.buffer : null;
+  const imageFile = req.file;
 
   console.log('Updating profile ID:', profileId, 'for user_id:', user_id);
 
@@ -136,18 +154,39 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 
     console.log('Updating profile with new data');
 
-    // Update the profile
-    if (image) {
-      db.run(
-        'UPDATE profiles SET name = ?, designation = ?, description = ?, image = ?, user_id = ? WHERE id = ?',
-        [name, designation, description, image, user_id, profileId]
-      );
-    } else {
-      db.run(
-        'UPDATE profiles SET name = ?, designation = ?, description = ?, user_id = ? WHERE id = ?',
-        [name, designation, description, user_id, profileId]
-      );
+    let imageId = profile.image_id;
+    let imageUrl = profile.image_url;
+
+    // Upload new image to Google Drive if provided
+    if (imageFile) {
+      try {
+        // Delete old image if it exists
+        if (profile.image_id) {
+          try {
+            await fileStorage.deleteFile(profile.image_id);
+            console.log('Old image deleted from Google Drive with ID:', profile.image_id);
+          } catch (deleteError) {
+            console.error('Error deleting old image from Google Drive:', deleteError);
+            // Continue even if delete fails
+          }
+        }
+
+        // Upload new image
+        const uploadResult = await fileStorage.uploadProfileImage(imageFile.buffer, user_id);
+        imageId = uploadResult.fileId;
+        imageUrl = uploadResult.webContentLink;
+        console.log('New image uploaded to Google Drive with ID:', imageId);
+      } catch (uploadError) {
+        console.error('Error uploading image to Google Drive:', uploadError);
+        // Continue without changing image if upload fails
+      }
     }
+
+    // Update the profile
+    db.run(
+      'UPDATE profiles SET name = ?, designation = ?, description = ?, image_id = ?, image_url = ?, user_id = ? WHERE id = ?',
+      [name, designation, description, imageId, imageUrl, user_id, profileId]
+    );
 
     console.log('Profile updated successfully');
 
@@ -156,6 +195,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       name,
       designation,
       description,
+      image_url: imageUrl,
       user_id,
       updated: true
     });
@@ -191,18 +231,32 @@ router.post('/:id/comments', async (req, res) => {
 // Get profile image
 router.get('/:id/image', async (req, res) => {
   try {
-    const row = db.get('SELECT image FROM profiles WHERE id = ?', [req.params.id]);
+    const profile = db.get('SELECT image_id, image_url FROM profiles WHERE id = ?', [req.params.id]);
 
-    if (!row || !row.image) {
+    if (!profile || (!profile.image_id && !profile.image_url)) {
       return res.status(404).json({ message: 'Image not found' });
     }
 
-    res.writeHead(200, {
-      'Content-Type': 'image/jpeg',
-      'Content-Length': row.image.length
-    });
-    res.end(row.image);
+    // If we have a direct URL to the image, redirect to it
+    if (profile.image_url) {
+      return res.redirect(profile.image_url);
+    }
+
+    // Otherwise, fetch the image from Google Drive
+    try {
+      const file = await fileStorage.getProfileImage(profile.image_id);
+
+      res.writeHead(200, {
+        'Content-Type': file.metadata.mimeType || 'image/jpeg',
+        'Content-Length': file.content.length
+      });
+      res.end(file.content);
+    } catch (driveError) {
+      console.error('Error fetching image from Google Drive:', driveError);
+      return res.status(500).json({ error: 'Error fetching image from Google Drive' });
+    }
   } catch (err) {
+    console.error('Error getting profile image:', err);
     return res.status(500).json({ error: err.message });
   }
 });
