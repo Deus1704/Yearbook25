@@ -9,7 +9,7 @@
 const THIRD_PARTY_CORS_PROXY = 'https://corsproxy.io/?';
 
 // The base URL of the API
-const API_BASE_URL = 'https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app/api';
+const API_BASE_URL = 'https://yearbook25-xb9a.onrender.com/api';
 
 /**
  * Make a request through the third-party CORS proxy

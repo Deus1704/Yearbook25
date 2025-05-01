@@ -6,7 +6,7 @@
  */
 
 // The base URL of the API
-const API_BASE_URL = 'https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app/api';
+const API_BASE_URL = 'https://yearbook25-xb9a.onrender.com/api';
 
 // Available proxy methods
 const PROXY_METHODS = {

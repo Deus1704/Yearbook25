@@ -10,51 +10,42 @@ const app = express();
 
 // Middleware
 // Configure CORS - more permissive configuration
-// const allowedOrigins = process.env.NODE_ENV === 'production'
-//   ? [
-//       process.env.FRONTEND_URL || 'https://students.iitgn.ac.in',
-//       'https://students.iitgn.ac.in',
-//       'https://students.iitgn.ac.in/yearbook/2025',
-//       'https://yearbook25.vercel.app',
-//       'https://corsproxy.io'
-//     ]
-//   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [
+      process.env.FRONTEND_URL || 'https://students.iitgn.ac.in',
+      'https://students.iitgn.ac.in',
+      'https://students.iitgn.ac.in/yearbook/2025',
+    ]
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
-// // Enable CORS for all routes
-// app.use(cors({
-//   origin: function(origin, callback) {
-//     // Allow requests with no origin (like mobile apps, curl requests)
-//     if (!origin) return callback(null, true);
-
-//     // For development or debugging, you can allow all origins
-//     if (process.env.CORS_ALLOW_ALL === 'true') {
-//       return callback(null, true);
-//     }
-
-//     // Check if the origin is from corsproxy.io
-//     if (origin && origin.includes('corsproxy.io')) {
-//       console.log('Allowing corsproxy.io request:', origin);
-//       return callback(null, true);
-//     }
-
-//     if (allowedOrigins.indexOf(origin) !== -1) {
-//       callback(null, true);
-//     } else {
-//       console.log('CORS blocked origin:', origin);
-//       // Still allow the request to go through for Vercel deployment
-//       callback(null, true);
-//     }
-//   },
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Date', 'X-Api-Version', 'Origin']
-// }));
-
+// Enable CORS for all routes
 app.use(cors({
-  origin: ['https://students.iitgn.ac.in'],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+
+    // For development or debugging, you can allow all origins
+    if (process.env.CORS_ALLOW_ALL === 'true') {
+      return callback(null, true);
+    }
+
+    // Check if the origin is from corsproxy.io
+    if (origin && origin.includes('corsproxy.io')) {
+      console.log('Allowing corsproxy.io request:', origin);
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      // Still allow the request to go through for Vercel deployment
+      callback(null, true);
+    }
+  },
   credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Date', 'X-Api-Version', 'Origin']
 }));
 
 // Handle preflight requests

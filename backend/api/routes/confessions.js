@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 
 // The actual API URL
-const API_URL = 'https://yearbook25-git-backend-only-jayraj-dulanges-projects.vercel.app/api';
+const API_URL = 'https://yearbook25-xb9a.onrender.com/api';
 
 // Get all confessions
 router.get('/', async (req, res) => {
