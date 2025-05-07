@@ -19,11 +19,22 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
     ]
   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
-// Simple CORS middleware that allows all origins and handles preflight requests
+// Comprehensive CORS middleware that allows all origins and handles preflight requests
 app.use((req, res, next) => {
+  // Allow requests from any origin
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+
+  // Allow specific methods
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+
+  // Allow specific headers - expanded list to include all common headers
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token, X-Api-Version, Access-Control-Allow-Methods, Access-Control-Allow-Origin, Access-Control-Allow-Headers');
+
+  // Allow credentials
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  // Set max age for preflight requests
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
