@@ -121,6 +121,40 @@ async function getMemoryImage(fileId) {
 }
 
 /**
+ * Update a profile image in Google Drive
+ * @param {string} fileId - The ID of the file to update
+ * @param {Buffer} imageBuffer - The new image buffer
+ * @returns {Promise<Object>} - The updated image metadata
+ */
+async function updateProfileImage(fileId, imageBuffer) {
+  try {
+    // Delete the old file
+    await googleDrive.deleteFile(fileId);
+
+    // Upload the new file with the same name pattern but updated timestamp
+    const fileName = `profile_updated_${Date.now()}.jpg`;
+    const mimeType = 'image/jpeg';
+
+    const file = await googleDrive.uploadFile(
+      imageBuffer,
+      fileName,
+      mimeType,
+      profilesFolderId
+    );
+
+    return {
+      fileId: file.id,
+      fileName: file.name,
+      webViewLink: file.webViewLink,
+      webContentLink: file.webContentLink,
+    };
+  } catch (error) {
+    console.error('Error updating profile image:', error.message);
+    throw error;
+  }
+}
+
+/**
  * Delete a file from Google Drive
  * @param {string} fileId - The ID of the file to delete
  * @returns {Promise<boolean>} - True if the file was deleted successfully
@@ -164,6 +198,7 @@ module.exports = {
   initFileStorage,
   uploadProfileImage,
   getProfileImage,
+  updateProfileImage,
   uploadMemoryImage,
   getMemoryImage,
   deleteFile,

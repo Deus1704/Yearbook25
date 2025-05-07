@@ -14,7 +14,8 @@ const cors = require('cors');
 
 // Import database and services
 const db = require('./models/database');
-const fileStorage = require('./services/fileStorage');
+// Use fileStorageWithMock instead of fileStorage to support mock mode
+const fileStorage = require('./services/fileStorageWithMock');
 
 // Import custom middleware
 // const { corsMiddleware, additionalCorsHeaders, preflightHandler } = require('./middleware/cors');

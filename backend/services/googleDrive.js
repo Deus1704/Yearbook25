@@ -111,10 +111,16 @@ async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FO
       parents: [folderId],
     };
 
-    // Create a readable stream from the file buffer
+    // Convert buffer to readable stream
+    const { Readable } = require('stream');
+    const readableStream = new Readable();
+    readableStream.push(Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer));
+    readableStream.push(null); // Signal the end of the stream
+
+    // Use the stream as the media body
     const media = {
       mimeType: mimeType,
-      body: fs.createReadStream(fileBuffer),
+      body: readableStream,
     };
 
     // Upload the file
