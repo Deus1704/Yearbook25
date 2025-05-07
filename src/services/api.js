@@ -254,8 +254,11 @@ export const getMemoryImageUrl = (id, directUrl = null) => {
   if (directUrl) {
     return directUrl;
   }
-  // Otherwise, use the API endpoint
-  return `${API_URL}/memories/${id}/image`;
+
+  // Otherwise, use the API endpoint with a cache-busting parameter
+  // This helps prevent browser caching issues with the images
+  const timestamp = new Date().getTime();
+  return `${API_URL}/memories/${id}/image?t=${timestamp}`;
 };
 
 // Backup related API calls

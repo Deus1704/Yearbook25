@@ -325,6 +325,9 @@ body {
   border-radius: 4px; /* Subtle rounding */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
+  background-color: #f8f9fa; /* Light background to make transparent images visible */
+  min-width: 100px; /* Ensure minimum size */
+  min-height: 100px; /* Ensure minimum size */
 }
 
 .memory-item:hover .memory-image {

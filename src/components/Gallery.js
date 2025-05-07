@@ -242,7 +242,8 @@ const Gallery = () => {
           id: memory.id,
           name: memory.name || 'Memory Image',
           type: 'memory',
-          imageUrl: getMemoryImageUrl(memory.id)
+          // Use the direct URL from Google Drive if available, otherwise use the API endpoint
+          imageUrl: memory.image_url || memory.imageUrl || getMemoryImageUrl(memory.id)
         }));
 
         // Combine and shuffle all images
@@ -337,7 +338,14 @@ const Gallery = () => {
 
     // Determine the image source based on the image object structure
     // Handle temporary images from uploads that haven't been saved to DB yet
-    const imageSrc = image.tempImage || image.imageUrl || 'https://via.placeholder.com/200x200?text=No+Image';
+    // Add a cache-busting parameter to prevent browser caching issues
+    const timestamp = new Date().getTime();
+    let imageSrc = image.tempImage || image.imageUrl || 'https://via.placeholder.com/200x200?text=No+Image';
+
+    // Add cache-busting parameter if it's not a Google Drive URL (which contains 'drive.google.com')
+    if (imageSrc && !imageSrc.includes('drive.google.com') && !imageSrc.includes('placeholder')) {
+      imageSrc = `${imageSrc}${imageSrc.includes('?') ? '&' : '?'}t=${timestamp}`;
+    }
 
     return (
       <div
