@@ -13,6 +13,7 @@ import Navbardesk from './Navbar';
 import { Container, Form, Button, Spinner } from 'react-bootstrap';
 import { FaPlus, FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import Toast from './Toast';
 
 const Gallery = () => {
   const { currentUser } = useAuth();
@@ -26,6 +27,9 @@ const Gallery = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const fileInputRef = useRef(null);
   const dropAreaRef = useRef(null);
 
@@ -185,11 +189,18 @@ const Gallery = () => {
       setSelectedFiles([]);
       setPreviewUrls([]);
 
-      // Show success message
-      alert(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your images will be visible after admin approval.`);
+      // Show success message with clear indication about the review process using toast
+      setToastMessage(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your image${uploadedImages.length !== 1 ? 's are' : ' is'} now under review and will be visible in Memory Lane after admin approval.`);
+      setToastType('success');
+      setShowToast(true);
     } catch (error) {
       console.error('Error uploading images:', error);
-      setUploadError('Failed to upload images. Please try again.');
+      setUploadError('There was an issue uploading your images. Please check your connection and try again.');
+
+      // Show error message using toast
+      setToastMessage('There was an issue uploading your images. Please check your connection and try again.');
+      setToastType('error');
+      setShowToast(true);
     } finally {
       setUploading(false);
     }
@@ -484,6 +495,15 @@ const Gallery = () => {
     <>
       {!isMobile && <Navbardesk />}
       <div className="gallery-container">
+        {/* Toast notification */}
+        <Toast
+          show={showToast}
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+          position="top-center"
+        />
+
         <Container>
           <div className="gallery-header">
             <Link to="/" className="back-button">
