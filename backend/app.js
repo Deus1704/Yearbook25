@@ -10,33 +10,35 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
+const cors = require('cors');
 
 // Import database and services
 const db = require('./models/database');
 const fileStorage = require('./services/fileStorage');
 
 // Import custom middleware
-const { corsMiddleware, additionalCorsHeaders, preflightHandler } = require('./middleware/cors');
+// const { corsMiddleware, additionalCorsHeaders, preflightHandler } = require('./middleware/cors');
 
 dotenv.config();
 
 const app = express();
 
-// Configure allowed origins
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [
-      process.env.FRONTEND_URL || 'https://students.iitgn.ac.in',
-      'https://students.iitgn.ac.in',
-      'https://students.iitgn.ac.in/yearbook/2025',
-      'https://students.iitgn.ac.in/yearbook',
-      'https://yearbook25-xb9a.onrender.com',
-    ]
-  : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
+// // Configure allowed origins
+// const allowedOrigins = process.env.NODE_ENV === 'production'
+//   ? [
+//       process.env.FRONTEND_URL || 'https://students.iitgn.ac.in',
+//       'https://students.iitgn.ac.in',
+//       'https://students.iitgn.ac.in/yearbook/2025',
+//       'https://students.iitgn.ac.in/yearbook',
+//       'https://yearbook25-xb9a.onrender.com',
+//     ]
+//   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
-// Apply CORS middleware
-app.use(corsMiddleware);
-app.use(additionalCorsHeaders);
-app.use(preflightHandler);
+// // Apply CORS middleware
+// app.use(corsMiddleware);
+// app.use(additionalCorsHeaders);
+// app.use(preflightHandler);
+app.use(cors());
 
 // Add a middleware to log all requests for debugging
 app.use((req, _res, next) => {
