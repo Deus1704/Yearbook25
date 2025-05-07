@@ -12,8 +12,10 @@ import {
 import Navbardesk from './Navbar';
 import { Container, Form, Button, Spinner } from 'react-bootstrap';
 import { FaPlus, FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const Gallery = () => {
+  const { currentUser } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
   const [profiles, setProfiles] = useState([]);
   const [allImages, setAllImages] = useState([]);
@@ -150,15 +152,29 @@ const Gallery = () => {
     setUploadError(null);
 
     try {
+      // Create a FormData object
+      const formData = new FormData();
+
+      // Add the user's email to identify who uploaded the images
+      const uploadedBy = currentUser?.email || 'anonymous';
+      formData.append('uploadedBy', uploadedBy);
+
+      // Add each file to the FormData
+      selectedFiles.forEach((file, index) => {
+        formData.append('image', file);
+        formData.append(`name-${index}`, `Memory ${index + 1}`);
+      });
+
       // Upload the images to the server
-      const uploadedImages = await uploadMultipleMemoryImages(selectedFiles);
+      const uploadedImages = await uploadMultipleMemoryImages(selectedFiles, uploadedBy);
 
       // Create temporary objects for immediate display
       const newImages = uploadedImages.map((image, index) => ({
         id: image.id,
         name: image.name || `Memory ${index + 1}`,
         type: 'memory',
-        imageUrl: getMemoryImageUrl(image.id)
+        imageUrl: getMemoryImageUrl(image.id),
+        approved: false // New images are not approved by default
       }));
 
       // Add the new images to allImages
@@ -170,7 +186,7 @@ const Gallery = () => {
       setPreviewUrls([]);
 
       // Show success message
-      alert(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}!`);
+      alert(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your images will be visible after admin approval.`);
     } catch (error) {
       console.error('Error uploading images:', error);
       setUploadError('Failed to upload images. Please try again.');
@@ -178,6 +194,13 @@ const Gallery = () => {
       setUploading(false);
     }
   };
+
+  // Check if user is admin
+  const isAdmin = currentUser && currentUser.email &&
+    (currentUser.email === 'admin@iitgn.ac.in' ||
+     currentUser.email === 'yearbook@iitgn.ac.in' ||
+     currentUser.email === 'maprc@iitgn.ac.in' ||
+     currentUser.email === 'jayraj.jayraj@iitgn.ac.in');
 
   // Effect to handle screen size changes and fetch data
   useEffect(() => {
@@ -191,7 +214,7 @@ const Gallery = () => {
         // Fetch both profiles and memory images in parallel
         const [profilesData, memoryImagesData] = await Promise.all([
           getProfiles(),
-          getMemoryImages()
+          getMemoryImages(isAdmin) // Pass isAdmin to get all images if admin
         ]);
 
         setProfiles(profilesData);

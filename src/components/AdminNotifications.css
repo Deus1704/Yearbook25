@@ -1,0 +1,191 @@
+.admin-notifications {
+  position: relative;
+}
+
+.notification-icon {
+  position: relative;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #fff;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.7rem;
+  transform: translate(25%, -25%);
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 350px;
+  max-height: 500px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.notifications-header h5 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.notifications-actions {
+  display: flex;
+  align-items: center;
+}
+
+.notifications-actions .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.notifications-body {
+  overflow-y: auto;
+  max-height: 400px;
+  padding: 0;
+}
+
+.notification-item {
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+  background-color: #f8f9fa;
+}
+
+.notification-item.unread {
+  background-color: #e8f4fd;
+}
+
+.notification-item.unread:hover {
+  background-color: #d8eaf9;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.notification-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.notification-time {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #adb5bd;
+}
+
+.notification-actions {
+  display: flex;
+  align-items: center;
+}
+
+.notification-actions .btn {
+  padding: 0.25rem 0.5rem;
+  margin-left: 0.5rem;
+}
+
+.no-notifications {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.notification-error {
+  padding: 1rem;
+  text-align: center;
+  color: #dc3545;
+}
+
+/* Memory approval modal styles */
+.memory-approval-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.memory-image-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.memory-preview-image {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.memory-details {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.memory-details p {
+  margin-bottom: 0.5rem;
+}
+
+.view-btn {
+  color: #6c757d;
+}
+
+.view-btn:hover {
+  color: #495057;
+}
+
+/* Mobile styles */
+@media (max-width: 576px) {
+  .notifications-dropdown {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: calc(100vh - 60px);
+    border-radius: 0;
+  }
+
+  .notifications-body {
+    max-height: calc(100vh - 120px);
+  }
+}

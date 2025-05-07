@@ -6,6 +6,7 @@ import './Navbardesk.css';
 import { auth } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../context/AuthContext';
+import AdminNotifications from './AdminNotifications';
 
 const Navbardesk = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -139,14 +140,27 @@ const Navbardesk = () => {
                       <i className="fas fa-plus-circle me-1"></i> Build Your Profile
                     </Nav.Link>
                     {isAdmin && (
-                      <Nav.Link
-                        as={Link}
-                        to="/backup-manager"
-                        className={`backup-manager-btn ${isActive('/backup-manager') ? 'active' : ''}`}
-                        onClick={() => setExpanded(false)}
-                      >
-                        <i className="fas fa-database me-1"></i> Backup Manager
-                      </Nav.Link>
+                      <>
+                        <Nav.Link
+                          as={Link}
+                          to="/backup-manager"
+                          className={`backup-manager-btn ${isActive('/backup-manager') ? 'active' : ''}`}
+                          onClick={() => setExpanded(false)}
+                        >
+                          <i className="fas fa-database me-1"></i> Backup Manager
+                        </Nav.Link>
+                        <Nav.Link
+                          as={Link}
+                          to="/pending-approvals"
+                          className={`pending-approvals-btn ${isActive('/pending-approvals') ? 'active' : ''}`}
+                          onClick={() => setExpanded(false)}
+                        >
+                          <i className="fas fa-tasks me-1"></i> Pending Approvals
+                        </Nav.Link>
+                        <div className="nav-item">
+                          <AdminNotifications />
+                        </div>
+                      </>
                     )}
                     <Button
                       variant="outline-light"

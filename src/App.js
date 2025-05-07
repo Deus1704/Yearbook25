@@ -11,6 +11,7 @@ import Messages from './components/Messages';
 import Confessions from './components/Confessions';
 import BuildProfile from './components/BuildProfile';
 import BackupManager from './components/BackupManager';
+import PendingApprovals from './components/PendingApprovals';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -41,6 +42,7 @@ function App() {
               <Route path="/profileD/:id" element={<ProfilePage />} />
               <Route path="/build-profile" element={<BuildProfile />} />
               <Route path="/backup-manager" element={<BackupManager />} />
+              <Route path="/pending-approvals" element={<PendingApprovals />} />
             </Route>
           </Route>
 

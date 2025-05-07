@@ -199,14 +199,23 @@ export const deleteMessage = async (id) => {
 };
 
 // Memory Images related API calls
-export const getMemoryImages = async () => {
-  const response = await axios.get(`${API_URL}/memories`);
+export const getMemoryImages = async (isAdmin = false) => {
+  const url = isAdmin ?
+    `${API_URL}/memories?admin=true` :
+    `${API_URL}/memories`;
+
+  const response = await axios.get(url);
   return response.data;
 };
 
-export const uploadMemoryImage = async (imageFile) => {
+export const uploadMemoryImage = async (imageFile, uploadedBy = null) => {
   const formData = new FormData();
   formData.append('image', imageFile);
+
+  // Add the uploadedBy field if provided
+  if (uploadedBy) {
+    formData.append('uploadedBy', uploadedBy);
+  }
 
   const response = await axios.post(`${API_URL}/memories`, formData, {
     headers: {
@@ -216,8 +225,14 @@ export const uploadMemoryImage = async (imageFile) => {
   return response.data;
 };
 
-export const uploadMultipleMemoryImages = async (imageFiles) => {
+export const uploadMultipleMemoryImages = async (imageFiles, uploadedBy = null) => {
   const formData = new FormData();
+
+  // Add the uploadedBy field if provided
+  if (uploadedBy) {
+    formData.append('uploadedBy', uploadedBy);
+  }
+
   imageFiles.forEach((file, index) => {
     // Use 'image' as the field name for each file (matches what the server expects)
     formData.append('image', file);
@@ -270,6 +285,114 @@ export const restoreFromBackup = async (fileId) => {
     return response.data;
   } catch (error) {
     console.error('Error restoring from backup:', error.message);
+    throw error;
+  }
+};
+
+// Notification related API calls
+export const getAdminNotifications = async (adminEmail) => {
+  try {
+    const response = await axios.get(`${API_URL}/notifications`, {
+      params: { adminEmail }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching admin notifications:', error.message);
+    throw error;
+  }
+};
+
+export const getUnreadNotificationsCount = async (adminEmail) => {
+  try {
+    const response = await axios.get(`${API_URL}/notifications/unread/count`, {
+      params: { adminEmail }
+    });
+    return response.data.count;
+  } catch (error) {
+    console.error('Error fetching unread notifications count:', error.message);
+    throw error;
+  }
+};
+
+export const markNotificationAsRead = async (notificationId, adminEmail) => {
+  try {
+    const response = await axios.put(`${API_URL}/notifications/${notificationId}/read`, {
+      adminEmail
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error marking notification as read:', error.message);
+    throw error;
+  }
+};
+
+export const markAllNotificationsAsRead = async (adminEmail) => {
+  try {
+    const response = await axios.put(`${API_URL}/notifications/read/all`, {
+      adminEmail
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error.message);
+    throw error;
+  }
+};
+
+// Memory approval related API calls
+export const getMemoryImagesForAdmin = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/memories`, {
+      params: { admin: true }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching memory images for admin:', error.message);
+    throw error;
+  }
+};
+
+export const getPendingMemoryImagesCount = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/memories/pending/count`);
+    return response.data.count;
+  } catch (error) {
+    console.error('Error fetching pending memory images count:', error.message);
+    throw error;
+  }
+};
+
+export const getPendingMemoryImages = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/memories/pending/all`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching pending memory images:', error.message);
+    throw error;
+  }
+};
+
+export const approveMemoryImage = async (id, adminEmail) => {
+  try {
+    const response = await axios.put(`${API_URL}/memories/${id}/approve`, {
+      approved: true,
+      adminEmail
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error approving memory image:', error.message);
+    throw error;
+  }
+};
+
+export const rejectMemoryImage = async (id, adminEmail) => {
+  try {
+    const response = await axios.put(`${API_URL}/memories/${id}/approve`, {
+      approved: false,
+      adminEmail
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error rejecting memory image:', error.message);
     throw error;
   }
 };
