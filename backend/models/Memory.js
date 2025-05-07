@@ -25,6 +25,21 @@ const MemorySchema = new Schema({
   uploadedBy: {
     type: String
   },
+  // Approval status for admin moderation
+  approved: {
+    type: Boolean,
+    default: false
+  },
+  // Email of the admin who approved the image
+  approvedBy: {
+    type: String,
+    default: null
+  },
+  // Timestamp when the image was approved
+  approvedAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

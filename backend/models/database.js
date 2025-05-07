@@ -54,6 +54,10 @@ class Database {
           name TEXT,
           image_id TEXT NOT NULL,
           image_url TEXT NOT NULL,
+          uploaded_by TEXT,
+          approved INTEGER DEFAULT 0,
+          approved_by TEXT,
+          approved_at DATETIME,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);

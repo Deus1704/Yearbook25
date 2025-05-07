@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const Memory = require('../../models/Memory');
 const fileStorage = require('../../services/fileStorage');
+const { sendAdminNotification } = require('../../services/notificationService');
 
 // Multer configuration for handling file uploads
 const upload = multer({
@@ -13,7 +14,20 @@ const upload = multer({
 // Get all memories
 router.get('/', async (req, res) => {
   try {
-    const memories = await Memory.find().select('-image').sort({ createdAt: -1 });
+    // Check if the request is from an admin (based on query parameter)
+    const isAdmin = req.query.admin === 'true';
+
+    let query = {};
+
+    // If not admin, only return approved images
+    if (!isAdmin) {
+      query.approved = true;
+    }
+
+    const memories = await Memory.find(query)
+      .select('-image')
+      .sort({ createdAt: -1 });
+
     res.json(memories);
   } catch (err) {
     console.error('Error fetching memories:', err);
@@ -25,11 +39,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const memory = await Memory.findById(req.params.id).select('-image');
-    
+
     if (!memory) {
       return res.status(404).json({ message: 'Memory not found' });
     }
-    
+
     res.json(memory);
   } catch (err) {
     console.error('Error fetching memory:', err);
@@ -112,7 +126,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     } catch (uploadError) {
       console.error('Error uploading memory image to Google Drive:', uploadError);
       console.log('Storing image in MongoDB directly as fallback');
-      
+
       // Store the image directly in MongoDB as a fallback
       imageData = imageFile.buffer;
       contentType = imageFile.mimetype;
@@ -124,6 +138,7 @@ router.post('/', upload.single('image'), async (req, res) => {
       uploadedBy,
       imageId,
       imageUrl,
+      approved: false,
       createdAt: Date.now()
     });
 
@@ -134,6 +149,22 @@ router.post('/', upload.single('image'), async (req, res) => {
     }
 
     await newMemory.save();
+
+    // Send notification to admins about the new memory image
+    try {
+      await sendAdminNotification({
+        type: 'memory_upload',
+        memoryId: newMemory._id.toString(),
+        name,
+        uploadedBy,
+        imageUrl: newMemory.imageUrl,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`Admin notification sent for memory upload (ID: ${newMemory._id})`);
+    } catch (notificationError) {
+      console.error('Error sending admin notification:', notificationError);
+      // Continue even if notification fails
+    }
 
     // Return the memory without the image data
     const memoryResponse = newMemory.toObject();
@@ -160,7 +191,7 @@ router.post('/batch', upload.array('images', 10), async (req, res) => {
     // Process each file
     for (const file of req.files) {
       const name = file.originalname || 'Memory';
-      
+
       try {
         // Upload image to Google Drive
         let imageId = null;
@@ -176,7 +207,7 @@ router.post('/batch', upload.array('images', 10), async (req, res) => {
         } catch (uploadError) {
           console.error('Error uploading memory image to Google Drive:', uploadError);
           console.log('Storing image in MongoDB directly as fallback');
-          
+
           // Store the image directly in MongoDB as a fallback
           imageData = file.buffer;
           contentType = file.mimetype;
@@ -188,6 +219,7 @@ router.post('/batch', upload.array('images', 10), async (req, res) => {
           uploadedBy,
           imageId,
           imageUrl,
+          approved: false,
           createdAt: Date.now()
         });
 
@@ -198,6 +230,22 @@ router.post('/batch', upload.array('images', 10), async (req, res) => {
         }
 
         await newMemory.save();
+
+        // Send notification to admins about the new memory image
+        try {
+          await sendAdminNotification({
+            type: 'memory_upload',
+            memoryId: newMemory._id.toString(),
+            name,
+            uploadedBy,
+            imageUrl: newMemory.imageUrl,
+            timestamp: new Date().toISOString()
+          });
+          console.log(`Admin notification sent for memory upload (ID: ${newMemory._id})`);
+        } catch (notificationError) {
+          console.error('Error sending admin notification:', notificationError);
+          // Continue even if notification fails
+        }
 
         // Add to results
         const memoryResponse = newMemory.toObject();
@@ -250,6 +298,83 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Memory deleted successfully' });
   } catch (err) {
     console.error('Error deleting memory:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Approve or reject a memory image
+router.put('/:id/approve', async (req, res) => {
+  const { id } = req.params;
+  const { approved, adminEmail } = req.body;
+
+  if (approved === undefined) {
+    return res.status(400).json({ error: 'Approval status is required' });
+  }
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: 'Admin email is required' });
+  }
+
+  // Check if the user is an admin
+  const isAdmin = adminEmail === 'admin@iitgn.ac.in' ||
+                  adminEmail === 'yearbook@iitgn.ac.in' ||
+                  adminEmail === 'maprc@iitgn.ac.in' ||
+                  adminEmail === 'jayraj.jayraj@iitgn.ac.in';
+
+  if (!isAdmin) {
+    return res.status(403).json({ error: 'Only admins can approve or reject memory images' });
+  }
+
+  try {
+    // Check if the memory exists
+    const memory = await Memory.findById(id);
+
+    if (!memory) {
+      return res.status(404).json({ message: 'Memory not found' });
+    }
+
+    // Update the memory's approval status
+    memory.approved = approved;
+    memory.approvedBy = adminEmail;
+    memory.approvedAt = approved ? new Date() : null;
+
+    await memory.save();
+
+    // Return the updated memory without the image data
+    const memoryResponse = memory.toObject();
+    delete memoryResponse.image;
+
+    res.json({
+      ...memoryResponse,
+      message: approved ? 'Memory image approved successfully' : 'Memory image rejected successfully'
+    });
+  } catch (err) {
+    console.error('Error updating memory approval status:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get pending approvals count for admins
+router.get('/pending/count', async (req, res) => {
+  try {
+    const count = await Memory.countDocuments({ approved: false });
+    res.json({ count });
+  } catch (err) {
+    console.error('Error getting pending approvals count:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all pending approvals for admins
+router.get('/pending/all', async (req, res) => {
+  try {
+    const pendingMemories = await Memory.find({ approved: false })
+      .select('-image')
+      .sort({ createdAt: -1 });
+
+    res.json(pendingMemories);
+  } catch (err) {
+    console.error('Error getting pending approvals:', err);
     return res.status(500).json({ error: err.message });
   }
 });

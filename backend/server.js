@@ -151,6 +151,7 @@ app.get('/cors-test', (req, res) => {
 const routes = dbManager.getRoutes();
 const corsProxyRoutes = require('./routes/cors-proxy');
 const backupRoutes = require('./routes/backups');
+const notificationRoutes = require('./routes/notifications');
 
 // Use routes
 app.use('/api/profiles', routes.profiles);
@@ -159,6 +160,7 @@ app.use('/api/messages', routes.messages);
 app.use('/api/memories', routes.memories);
 app.use('/api/cors-proxy', corsProxyRoutes);
 app.use('/api/backups', backupRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const PORT = process.env.PORT || 5000;
 
