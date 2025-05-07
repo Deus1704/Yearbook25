@@ -29,9 +29,18 @@ const ProfileSchema = new Schema({
     type: String,
     default: ''
   },
+  // Store image in two ways:
+  // 1. Directly in MongoDB (for small images or fallback)
   image: {
     type: Buffer,
     contentType: String
+  },
+  // 2. Reference to Google Drive (preferred for larger images)
+  imageId: {
+    type: String
+  },
+  imageUrl: {
+    type: String
   },
   comments: [{
     userId: {
