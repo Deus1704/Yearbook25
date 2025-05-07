@@ -38,7 +38,13 @@ const app = express();
 // app.use(corsMiddleware);
 // app.use(additionalCorsHeaders);
 // app.use(preflightHandler);
-app.use(cors());
+app.use(cors(
+  {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  }
+));
 
 // Add a middleware to log all requests for debugging
 app.use((req, _res, next) => {
