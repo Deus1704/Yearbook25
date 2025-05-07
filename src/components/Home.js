@@ -73,14 +73,14 @@ const Home = () => {
             {isMobile ? (
               <>
                 <img src={logo} alt="Logo" className="logo" style={{ filter: 'invert(1)' }} />
-                <h1>Yearbook 2024</h1>
+                <h1>Yearbook 2025</h1>
                 <Link to="/build-profile" className="btn btn-outline-light" style={{ filter: 'invert(1)', borderRadius: '100%' }}>
                   <i className="fas fa-plus"></i>
                 </Link>
               </>
             ) : (
               <>
-                <h1 className="mb-3">Yearbook 2024 Gallery</h1>
+                <h1 className="mb-3">Yearbook 2025 Gallery</h1>
                 <p className="text-muted">Browse through the profiles of your classmates</p>
               </>
             )}

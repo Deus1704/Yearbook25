@@ -37,10 +37,11 @@
 }
 
 .landing-title {
-  font-size: 28px;
+  font-size: 60px;
   font-weight: 600;
-  margin: 0;
+  margin: 30px;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  font-family: 'Poppins', 'Inter', sans-serif;
 }
 
 .login-button {
@@ -153,7 +154,7 @@
   }
 
   .landing-title {
-    font-size: 20px;
+    font-size: 28px;
   }
 
   .landing-footer {

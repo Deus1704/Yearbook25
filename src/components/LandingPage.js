@@ -56,7 +56,7 @@ const LandingPage = () => {
       <div className="content-overlay">
         {/* Header with Title and Login Button */}
         <header className="landing-header">
-          <h1 className="landing-title">Yearbook | Class Of 2023</h1>
+          <h1 className="landing-title">Yearbook | Class Of 2025</h1>
           <button className="login-button" onClick={handleSignIn}>Login</button>
         </header>
 
@@ -82,7 +82,7 @@ const LandingPage = () => {
 
           <div className="footer-right-text">
             <p>Previous Yearbooks</p>
-            <p>Year Book of Class 2023</p>
+            <p><a href="https://students.iitgn.ac.in/yearbook/2023/" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>Year Book of Class 2023</a></p>
           </div>
         </footer>
       </div>

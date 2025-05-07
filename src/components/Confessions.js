@@ -119,7 +119,7 @@ const Confessions = () => {
               </Link>
             </div>
             <div className="title-container">
-              <h1 className="confessions-title">Yearbook Confessions</h1>
+              <h1 className="confessions-title">Yearbook 2025 Confessions</h1>
               <p className="confessions-subtitle">Share your thoughts, memories, and messages anonymously</p>
             </div>
           </div>

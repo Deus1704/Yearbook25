@@ -10,7 +10,7 @@ const GoogleSignIn = () => {
   const provider = new GoogleAuthProvider();
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  
+
   // Configure provider to request email
   provider.addScope('email');
   // Set provider to only show accounts from iitgn.ac.in domain
@@ -22,7 +22,7 @@ const GoogleSignIn = () => {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      
+
       // Double check that the email domain is from iitgn.ac.in
       if (user.email && user.email.endsWith('@iitgn.ac.in')) {
         // Store user info in localStorage to maintain session
@@ -48,28 +48,28 @@ const GoogleSignIn = () => {
       <Container className="my-auto">
         <div className="row justify-content-center">
           <div className="col-md-6 text-center" style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-            <img 
-              src={logo} 
-              alt="logo" 
-              className="img-fluid mb-4" 
-              style={{ height: '60px', width: '60px' }} 
+            <img
+              src={logo}
+              alt="logo"
+              className="img-fluid mb-4"
+              style={{ height: '60px', width: '60px' }}
             />
             <h1 className="mb-4">Yearbook 2025</h1>
             <h5 className="mb-1">"From campus to forever,</h5>
             <h5 className="mb-4">your story immortalized"</h5>
-            <h5 className="mb-2">Class of 2023</h5>
-            <h5 className="mb-4">Class of 2022</h5>
-            
+            <h5 className="mb-2">Class of 2025</h5>
+            <h5 className="mb-4">Class of 2024</h5>
+
             {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
-            
-            <Button 
+
+            <Button
               onClick={handleSignIn}
-              className="btn btn-lg mb-4" 
+              className="btn btn-lg mb-4"
               style={{ backgroundColor: '#a55c1b', color: 'white', borderRadius: '50px', padding: '10px 30px' }}
             >
               Sign in with Google
             </Button>
-            
+
             <h6 className="mb-3">Follow Us</h6>
             <div className="d-flex justify-content-center">
               <i className="fab fa-facebook fa-2x mx-2"></i>

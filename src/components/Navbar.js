@@ -78,7 +78,7 @@ const Navbardesk = () => {
           <Container fluid className="px-4">
             <Link to="/" className="navbar-brand-link">
               <img src={logo} alt="Logo" className="logo me-2" />
-              <Navbar.Brand>Yearbook 2025</Navbar.Brand>
+              <Navbar.Brand style={{ fontFamily: "'Poppins', 'Inter', sans-serif" }}>Yearbook 2025</Navbar.Brand>
             </Link>
             <Navbar.Toggle
               aria-controls="basic-navbar-nav"
