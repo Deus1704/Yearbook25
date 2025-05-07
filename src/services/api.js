@@ -3,7 +3,7 @@ import axios from 'axios';
 // Use the correct URL based on the environment
 // In production, use the deployed backend URL from .env.production
 // In development, use the environment variable or default to the deployed URL
-const API_URL = process.env.REACT_APP_API_URL || 'https://yearbook25-xb9a.onrender.com/api';
+const API_URL = 'https://yearbook25-xb9a.onrender.com/api';
 
 // Log the API URL for debugging
 console.log('API URL:', API_URL);
