@@ -4,8 +4,9 @@ const path = require('path');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
-// Import database manager
+// Import database manager and backup scheduler
 const dbManager = require('./models/database-manager');
+const backupScheduler = require('./scripts/schedule-backup');
 
 const app = express();
 
@@ -148,6 +149,7 @@ app.get('/cors-test', (req, res) => {
 // Get routes based on database type
 const routes = dbManager.getRoutes();
 const corsProxyRoutes = require('./routes/cors-proxy');
+const backupRoutes = require('./routes/backups');
 
 // Use routes
 app.use('/api/profiles', routes.profiles);
@@ -155,6 +157,7 @@ app.use('/api/confessions', routes.confessions);
 app.use('/api/messages', routes.messages);
 app.use('/api/memories', routes.memories);
 app.use('/api/cors-proxy', corsProxyRoutes);
+app.use('/api/backups', backupRoutes);
 
 const PORT = process.env.PORT || 5000;
 
@@ -166,6 +169,21 @@ async function startServer() {
 
     // Log which database is being used
     console.log(`Using ${dbManager.USE_MONGODB ? 'MongoDB' : 'SQLite'} database`);
+
+    // Initialize backup service and schedule backups
+    try {
+      await backupScheduler.initializeBackupService();
+
+      // Schedule automatic backups if enabled
+      if (process.env.ENABLE_AUTO_BACKUPS === 'true') {
+        backupScheduler.scheduleBackups();
+      } else {
+        console.log('Automatic backups are disabled. Set ENABLE_AUTO_BACKUPS=true to enable.');
+      }
+    } catch (backupErr) {
+      console.error('Warning: Failed to initialize backup service:', backupErr.message);
+      console.log('Server will run without automatic backups');
+    }
 
     // Start the server
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
