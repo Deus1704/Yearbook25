@@ -28,7 +28,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
 
   // Allow specific headers - expanded list to include all common headers
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token, X-Api-Version, Access-Control-Allow-Methods, Access-Control-Allow-Origin, Access-Control-Allow-Headers');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token, X-Api-Version');
 
   // Allow credentials
   res.header('Access-Control-Allow-Credentials', 'true');
