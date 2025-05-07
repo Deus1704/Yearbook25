@@ -67,6 +67,10 @@ router.get('/:id/image', async (req, res) => {
 
     // If we have a direct URL to the image, redirect to it
     if (memory.image_url) {
+      // Set cache control headers before redirecting
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       return res.redirect(memory.image_url);
     }
 
@@ -76,7 +80,10 @@ router.get('/:id/image', async (req, res) => {
 
       res.writeHead(200, {
         'Content-Type': file.metadata.mimeType || 'image/jpeg',
-        'Content-Length': file.content.length
+        'Content-Length': file.content.length,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       });
       res.end(file.content);
     } catch (driveError) {
