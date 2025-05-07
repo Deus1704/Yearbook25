@@ -1,0 +1,19 @@
+{
+  "name": "Test JSON",
+  "created": "2025-05-07T15:36:08.190Z",
+  "items": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "nested": {
+    "key": "value",
+    "array": [
+      "a",
+      "b",
+      "c"
+    ]
+  }
+}

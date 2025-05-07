@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const Profile = require('../../models/Profile');
 const fileStorage = require('../../services/fileStorage');
+const checkGraduatingStudent = require('../../middleware/graduatingStudentCheck');
 
 // Multer configuration for handling file uploads
 const upload = multer({
@@ -57,12 +58,12 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// Create new profile
-router.post('/', upload.single('image'), async (req, res) => {
+// Create new profile - only graduating students can create profiles
+router.post('/', upload.single('image'), checkGraduatingStudent, async (req, res) => {
   const { name, department, degree, quote, userId, email } = req.body;
   const imageFile = req.file;
 
-  console.log('Creating profile with user_id:', userId);
+  console.log('Creating profile with user_id:', userId, 'and email:', email);
 
   if (!userId) {
     return res.status(400).json({ error: 'User ID is required' });
@@ -74,9 +75,9 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     if (existingProfile) {
       console.log('User already has a profile with ID:', existingProfile._id);
-      return res.status(400).json({ 
-        error: 'User already has a profile', 
-        profileId: existingProfile._id 
+      return res.status(400).json({
+        error: 'User already has a profile',
+        profileId: existingProfile._id
       });
     }
 
@@ -97,7 +98,7 @@ router.post('/', upload.single('image'), async (req, res) => {
       } catch (uploadError) {
         console.error('Error uploading image to Google Drive:', uploadError);
         console.log('Storing image in MongoDB directly as fallback');
-        
+
         // Store the image directly in MongoDB as a fallback
         imageData = imageFile.buffer;
         contentType = imageFile.mimetype;
@@ -195,7 +196,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       } catch (uploadError) {
         console.error('Error uploading image to Google Drive:', uploadError);
         console.log('Storing image in MongoDB directly as fallback');
-        
+
         // Store the image directly in MongoDB as a fallback
         profile.image = imageFile.buffer;
         profile.contentType = imageFile.mimetype;

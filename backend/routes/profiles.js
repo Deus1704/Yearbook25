@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const db = require('../models/database');
 const fileStorage = require('../services/fileStorage');
+const checkGraduatingStudent = require('../middleware/graduatingStudentCheck');
 
 // Multer configuration for handling file uploads
 const upload = multer({
@@ -64,12 +65,12 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// Create new profile
-router.post('/', upload.single('image'), async (req, res) => {
-  const { name, designation, description, user_id } = req.body;
+// Create new profile - only graduating students can create profiles
+router.post('/', upload.single('image'), checkGraduatingStudent, async (req, res) => {
+  const { name, designation, description, user_id, email } = req.body;
   const imageFile = req.file;
 
-  console.log('Creating profile with user_id:', user_id);
+  console.log('Creating profile with user_id:', user_id, 'and email:', email);
 
   if (!user_id) {
     return res.status(400).json({ error: 'User ID is required' });
