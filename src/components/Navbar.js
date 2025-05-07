@@ -18,7 +18,8 @@ const Navbardesk = () => {
   const isAdmin = currentUser && currentUser.email &&
     (currentUser.email === 'admin@iitgn.ac.in' ||
      currentUser.email === 'yearbook@iitgn.ac.in' ||
-     currentUser.email === 'maprc@iitgn.ac.in');
+     currentUser.email === 'maprc@iitgn.ac.in' ||
+     currentUser.email === 'jayraj.jayraj@iitgn.ac.in');
 
   useEffect(() => {
     const checkScreenSize = () => {

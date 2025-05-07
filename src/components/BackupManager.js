@@ -18,10 +18,11 @@ const BackupManager = () => {
   const [actionInProgress, setActionInProgress] = useState(false);
 
   // Check if user is admin
-  const isAdmin = currentUser && currentUser.email && 
-    (currentUser.email === 'admin@iitgn.ac.in' || 
+  const isAdmin = currentUser && currentUser.email &&
+    (currentUser.email === 'admin@iitgn.ac.in' ||
      currentUser.email === 'yearbook@iitgn.ac.in' ||
-     currentUser.email === 'maprc@iitgn.ac.in');
+     currentUser.email === 'maprc@iitgn.ac.in' ||
+     currentUser.email === 'jayraj.jayraj@iitgn.ac.in');
 
   useEffect(() => {
     // Redirect if not admin
@@ -52,9 +53,9 @@ const BackupManager = () => {
       setActionInProgress(true);
       setSuccess('');
       setError('');
-      
+
       const result = await createBackup();
-      
+
       setSuccess('Backup created successfully!');
       await fetchBackups();
     } catch (err) {
@@ -76,9 +77,9 @@ const BackupManager = () => {
       setShowRestoreModal(false);
       setSuccess('');
       setError('');
-      
+
       await restoreFromBackup(selectedBackup.id);
-      
+
       setSuccess('Database restored successfully!');
       await fetchBackups();
     } catch (err) {
@@ -109,13 +110,13 @@ const BackupManager = () => {
       <Navbardesk />
       <Container className="backup-manager-container">
         <h2 className="text-center mb-4">Database Backup Manager</h2>
-        
+
         {error && <Alert variant="danger">{error}</Alert>}
         {success && <Alert variant="success">{success}</Alert>}
-        
+
         <div className="d-flex justify-content-between mb-4">
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onClick={handleCreateBackup}
             disabled={actionInProgress}
           >
@@ -128,16 +129,16 @@ const BackupManager = () => {
               'Create New Backup'
             )}
           </Button>
-          
-          <Button 
-            variant="outline-secondary" 
+
+          <Button
+            variant="outline-secondary"
             onClick={fetchBackups}
             disabled={actionInProgress}
           >
             Refresh List
           </Button>
         </div>
-        
+
         {loading ? (
           <div className="text-center py-5">
             <Spinner animation="border" role="status">
@@ -182,7 +183,7 @@ const BackupManager = () => {
             </Table>
           </div>
         )}
-        
+
         {/* Restore Confirmation Modal */}
         <Modal show={showRestoreModal} onHide={() => setShowRestoreModal(false)}>
           <Modal.Header closeButton>
