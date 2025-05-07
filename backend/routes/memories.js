@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const db = require('../models/database');
 const fileStorage = require('../services/fileStorage');
+const { sendAdminNotification } = require('../services/notificationService');
 
 // Multer configuration for handling file uploads
 const upload = multer({
@@ -15,7 +16,22 @@ const upload = multer({
 // Get all memory images
 router.get('/', async (req, res) => {
   try {
-    const rows = db.all('SELECT id, name, image_id, image_url, created_at FROM memories ORDER BY created_at DESC');
+    // Check if the request is from an admin (based on query parameter)
+    const isAdmin = req.query.admin === 'true';
+
+    let query = `
+      SELECT id, name, image_id, image_url, uploaded_by, approved, approved_by, approved_at, created_at
+      FROM memories
+    `;
+
+    // If not admin, only return approved images
+    if (!isAdmin) {
+      query += ' WHERE approved = 1 ';
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const rows = db.all(query);
     res.json(rows || []);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -25,10 +41,15 @@ router.get('/', async (req, res) => {
 // Get a single memory image metadata
 router.get('/:id', async (req, res) => {
   try {
-    const row = db.get('SELECT id, name, image_id, image_url, created_at FROM memories WHERE id = ?', [req.params.id]);
+    const row = db.get(
+      'SELECT id, name, image_id, image_url, uploaded_by, approved, approved_by, approved_at, created_at FROM memories WHERE id = ?',
+      [req.params.id]
+    );
+
     if (!row) {
       return res.status(404).json({ message: 'Memory not found' });
     }
+
     res.json(row);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -75,6 +96,7 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 
   const name = req.body.name || 'Memory';
+  const uploadedBy = req.body.uploadedBy || null;
   const imageFile = req.file;
 
   try {
@@ -94,15 +116,35 @@ router.post('/', upload.single('image'), async (req, res) => {
 
     // Save memory metadata to database
     const result = db.run(
-      'INSERT INTO memories (name, image_id, image_url) VALUES (?, ?, ?)',
-      [name, imageId, imageUrl]
+      'INSERT INTO memories (name, image_id, image_url, uploaded_by, approved) VALUES (?, ?, ?, ?, ?)',
+      [name, imageId, imageUrl, uploadedBy, 0] // Set approved to 0 (false) by default
     );
 
+    const memoryId = result.lastInsertRowid;
+
+    // Send notification to admins about the new memory image
+    try {
+      await sendAdminNotification({
+        type: 'memory_upload',
+        memoryId,
+        name,
+        uploadedBy,
+        imageUrl,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`Admin notification sent for memory upload (ID: ${memoryId})`);
+    } catch (notificationError) {
+      console.error('Error sending admin notification:', notificationError);
+      // Continue even if notification fails
+    }
+
     res.status(201).json({
-      id: result.lastInsertRowid,
+      id: memoryId,
       name,
       image_id: imageId,
       image_url: imageUrl,
+      uploaded_by: uploadedBy,
+      approved: false,
       created_at: new Date().toISOString()
     });
   } catch (err) {
@@ -116,6 +158,8 @@ router.post('/batch', upload.array('image', 10), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'At least one image is required' });
   }
+
+  const uploadedBy = req.body.uploadedBy || null;
 
   try {
     const uploadedImages = [];
@@ -142,15 +186,35 @@ router.post('/batch', upload.array('image', 10), async (req, res) => {
 
       // Save memory metadata to database
       const result = db.run(
-        'INSERT INTO memories (name, image_id, image_url) VALUES (?, ?, ?)',
-        [name, imageId, imageUrl]
+        'INSERT INTO memories (name, image_id, image_url, uploaded_by, approved) VALUES (?, ?, ?, ?, ?)',
+        [name, imageId, imageUrl, uploadedBy, 0] // Set approved to 0 (false) by default
       );
 
+      const memoryId = result.lastInsertRowid;
+
+      // Send notification to admins about the new memory image
+      try {
+        await sendAdminNotification({
+          type: 'memory_upload',
+          memoryId,
+          name,
+          uploadedBy,
+          imageUrl,
+          timestamp: new Date().toISOString()
+        });
+        console.log(`Admin notification sent for memory upload (ID: ${memoryId})`);
+      } catch (notificationError) {
+        console.error('Error sending admin notification:', notificationError);
+        // Continue even if notification fails
+      }
+
       uploadedImages.push({
-        id: result.lastInsertRowid,
+        id: memoryId,
         name,
         image_id: imageId,
         image_url: imageUrl,
+        uploaded_by: uploadedBy,
+        approved: false,
         created_at: new Date().toISOString()
       });
     }
@@ -163,6 +227,86 @@ router.post('/batch', upload.array('image', 10), async (req, res) => {
   } catch (err) {
     console.error('Error uploading images:', err);
     return res.status(400).json({ error: err.message });
+  }
+});
+
+// Approve or reject a memory image
+router.put('/:id/approve', async (req, res) => {
+  const { id } = req.params;
+  const { approved, adminEmail } = req.body;
+
+  if (approved === undefined) {
+    return res.status(400).json({ error: 'Approval status is required' });
+  }
+
+  if (!adminEmail) {
+    return res.status(400).json({ error: 'Admin email is required' });
+  }
+
+  // Check if the user is an admin
+  const isAdmin = adminEmail === 'admin@iitgn.ac.in' ||
+                  adminEmail === 'yearbook@iitgn.ac.in' ||
+                  adminEmail === 'maprc@iitgn.ac.in' ||
+                  adminEmail === 'jayraj.jayraj@iitgn.ac.in';
+
+  if (!isAdmin) {
+    return res.status(403).json({ error: 'Only admins can approve or reject memory images' });
+  }
+
+  try {
+    // Check if the memory exists
+    const memory = db.get('SELECT * FROM memories WHERE id = ?', [id]);
+
+    if (!memory) {
+      return res.status(404).json({ message: 'Memory not found' });
+    }
+
+    // Update the memory's approval status
+    const approvedValue = approved ? 1 : 0;
+    const approvedAt = approved ? new Date().toISOString() : null;
+
+    db.run(
+      'UPDATE memories SET approved = ?, approved_by = ?, approved_at = ? WHERE id = ?',
+      [approvedValue, adminEmail, approvedAt, id]
+    );
+
+    // Get the updated memory
+    const updatedMemory = db.get(
+      'SELECT id, name, image_id, image_url, uploaded_by, approved, approved_by, approved_at, created_at FROM memories WHERE id = ?',
+      [id]
+    );
+
+    res.json({
+      ...updatedMemory,
+      message: approved ? 'Memory image approved successfully' : 'Memory image rejected successfully'
+    });
+  } catch (err) {
+    console.error('Error updating memory approval status:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get pending approvals count for admins
+router.get('/pending/count', async (req, res) => {
+  try {
+    const result = db.get('SELECT COUNT(*) as count FROM memories WHERE approved = 0');
+    res.json({ count: result.count });
+  } catch (err) {
+    console.error('Error getting pending approvals count:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all pending approvals for admins
+router.get('/pending/all', async (req, res) => {
+  try {
+    const rows = db.all(
+      'SELECT id, name, image_id, image_url, uploaded_by, created_at FROM memories WHERE approved = 0 ORDER BY created_at DESC'
+    );
+    res.json(rows || []);
+  } catch (err) {
+    console.error('Error getting pending approvals:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 

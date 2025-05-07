@@ -1,0 +1,36 @@
+{
+  "files": {
+    "main.css": "/yearbook/2025/static/css/main.ac1304df.css",
+    "main.js": "/yearbook/2025/static/js/main.ee63ccf3.js",
+    "static/js/453.79a2a265.chunk.js": "/yearbook/2025/static/js/453.79a2a265.chunk.js",
+    "static/media/background.mp4": "/yearbook/2025/static/media/background.2a023c0baac65e8be4a3.mp4",
+    "static/media/thandi raand.jpg": "/yearbook/2025/static/media/thandi raand.b922696abe690986dc1c.jpg",
+    "static/media/Shaury patel.jpg": "/yearbook/2025/static/media/Shaury patel.b75a64b8a38189d91ae8.jpg",
+    "static/media/daddy.png": "/yearbook/2025/static/media/daddy.809a64a390a11791ba6a.png",
+    "static/media/ex-gen-secy.jpg": "/yearbook/2025/static/media/ex-gen-secy.60e2366bd65c491cf07d.jpg",
+    "static/media/fa-solid-900.ttf": "/yearbook/2025/static/media/fa-solid-900.bacd5de623fb563b961a.ttf",
+    "static/media/metis_logo_legacy.png": "/yearbook/2025/static/media/metis_logo_legacy.02460809b05ce13923b0.png",
+    "static/media/Logo.svg": "/yearbook/2025/static/media/Logo.17ab8c7198b37aa3d21b2f493e69084c.svg",
+    "static/media/fa-brands-400.ttf": "/yearbook/2025/static/media/fa-brands-400.60127e352b7a11f7f1bc.ttf",
+    "static/media/bootstrap-icons.woff?": "/yearbook/2025/static/media/bootstrap-icons.39795c0b4513de014cf8.woff",
+    "static/media/bhen ka lawda.jpg": "/yearbook/2025/static/media/bhen ka lawda.3efb49041fc6bbd0ad4a.jpg",
+    "static/media/fa-solid-900.woff2": "/yearbook/2025/static/media/fa-solid-900.4d986b00ff9ca3828fbd.woff2",
+    "static/media/bootstrap-icons.woff2?": "/yearbook/2025/static/media/bootstrap-icons.b7bcc075b395c14ce8c2.woff2",
+    "static/media/fa-brands-400.woff2": "/yearbook/2025/static/media/fa-brands-400.455ea818179b4def0c43.woff2",
+    "static/media/bhai muh me lele.jpg": "/yearbook/2025/static/media/bhai muh me lele.6aa7a4c25556e255d818.jpg",
+    "static/media/fa-regular-400.ttf": "/yearbook/2025/static/media/fa-regular-400.eb91f7b948a42799f678.ttf",
+    "static/media/mukul meena.jpeg": "/yearbook/2025/static/media/mukul meena.3f7a59c10c7b42f5e0af.jpeg",
+    "static/media/MAPRC.png": "/yearbook/2025/static/media/MAPRC.5d8a696c951c61445ca5.png",
+    "static/media/fa-regular-400.woff2": "/yearbook/2025/static/media/fa-regular-400.21cb8f55d8e0c5b89751.woff2",
+    "static/media/fa-v4compatibility.ttf": "/yearbook/2025/static/media/fa-v4compatibility.c8e090db312b0bea2aa2.ttf",
+    "static/media/fa-v4compatibility.woff2": "/yearbook/2025/static/media/fa-v4compatibility.cf7f5903d06b79ad60f1.woff2",
+    "index.html": "/yearbook/2025/index.html",
+    "main.ac1304df.css.map": "/yearbook/2025/static/css/main.ac1304df.css.map",
+    "main.ee63ccf3.js.map": "/yearbook/2025/static/js/main.ee63ccf3.js.map",
+    "453.79a2a265.chunk.js.map": "/yearbook/2025/static/js/453.79a2a265.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ac1304df.css",
+    "static/js/main.ee63ccf3.js"
+  ]
+}
