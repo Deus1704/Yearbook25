@@ -1,6 +1,6 @@
 /**
  * Schedule Backup Script
- * 
+ *
  * This script schedules automatic backups of the database to Google Drive.
  * It can be run as a standalone script or as part of the server startup.
  */
@@ -12,7 +12,7 @@ require('dotenv').config();
 const DEFAULT_BACKUP_INTERVAL = 24; // Once per day
 
 // Get backup interval from environment variable or use default
-const backupIntervalHours = parseInt(process.env.BACKUP_INTERVAL_HOURS || DEFAULT_BACKUP_INTERVAL, 10);
+const backupIntervalHours = parseFloat(process.env.BACKUP_INTERVAL_HOURS || DEFAULT_BACKUP_INTERVAL);
 const backupIntervalMs = backupIntervalHours * 60 * 60 * 1000;
 
 // Flag to track if backup service is initialized
@@ -23,7 +23,7 @@ let isInitialized = false;
  */
 async function initializeBackupService() {
   if (isInitialized) return;
-  
+
   try {
     await backupService.initBackupService();
     isInitialized = true;
@@ -41,15 +41,15 @@ async function performBackup() {
     if (!isInitialized) {
       await initializeBackupService();
     }
-    
+
     console.log(`Starting scheduled backup at ${new Date().toISOString()}`);
     const result = await backupService.createBackup();
     console.log(`Backup completed successfully. File ID: ${result.fileId}`);
-    
+
     // List existing backups
     const backups = await backupService.listBackups();
     console.log(`Total backups: ${backups.length}`);
-    
+
     // Keep only the last 10 backups to save space
     if (backups.length > 10) {
       console.log('Cleaning up old backups...');
@@ -72,11 +72,12 @@ async function performBackup() {
  * Schedule regular backups
  */
 function scheduleBackups() {
-  console.log(`Scheduling automatic backups every ${backupIntervalHours} hours`);
-  
+  const intervalMinutes = backupIntervalHours * 60;
+  console.log(`Scheduling automatic backups every ${backupIntervalHours} hours (${intervalMinutes} minutes)`);
+
   // Perform an initial backup
   performBackup();
-  
+
   // Schedule regular backups
   setInterval(performBackup, backupIntervalMs);
 }
