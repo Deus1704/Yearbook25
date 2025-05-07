@@ -4,9 +4,10 @@ const path = require('path');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
-// Import database manager and backup scheduler
+// Import database manager, backup scheduler, and auto-restore service
 const dbManager = require('./models/database-manager');
 const backupScheduler = require('./scripts/schedule-backup');
+const autoRestoreService = require('./services/autoRestoreService');
 
 const app = express();
 
@@ -169,6 +170,19 @@ async function startServer() {
 
     // Log which database is being used
     console.log(`Using ${dbManager.USE_MONGODB ? 'MongoDB' : 'SQLite'} database`);
+
+    // Try to restore from the most recent backup first
+    try {
+      const restored = await autoRestoreService.initAutoRestore();
+      if (restored) {
+        console.log('Successfully restored data from the most recent backup');
+      } else {
+        console.log('No auto-restore performed, using existing database');
+      }
+    } catch (restoreErr) {
+      console.error('Warning: Failed to auto-restore from backup:', restoreErr.message);
+      console.log('Continuing with existing database');
+    }
 
     // Initialize backup service and schedule backups
     try {
