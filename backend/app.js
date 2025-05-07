@@ -4,7 +4,6 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const multer = require('multer');
-const cors = require('cors');
 const { google } = require('googleapis');
 const streamifier = require('streamifier');
 const upload = multer({
@@ -12,15 +11,18 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-// Import database
+// Import database and services
 const db = require('./models/database');
 const fileStorage = require('./services/fileStorage');
+
+// Import custom middleware
+const { corsMiddleware, additionalCorsHeaders, preflightHandler } = require('./middleware/cors');
 
 dotenv.config();
 
 const app = express();
 
-// Configure CORS - more permissive configuration for production
+// Configure allowed origins
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? [
       process.env.FRONTEND_URL || 'https://students.iitgn.ac.in',
@@ -31,16 +33,10 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
     ]
   : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
 
-// Comprehensive CORS middleware
-app.use(cors({
-  origin: '*', // Allow all origins in development and testing
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true
-}));
-
-// Handle preflight requests
-app.options('*', cors());
+// Apply CORS middleware
+app.use(corsMiddleware);
+app.use(additionalCorsHeaders);
+app.use(preflightHandler);
 
 // Add a middleware to log all requests for debugging
 app.use((req, _res, next) => {
