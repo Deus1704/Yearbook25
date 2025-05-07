@@ -242,3 +242,34 @@ export const getMemoryImageUrl = (id, directUrl = null) => {
   // Otherwise, use the API endpoint
   return `${API_URL}/memories/${id}/image`;
 };
+
+// Backup related API calls
+export const getBackups = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/backups`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching backups:', error.message);
+    throw error;
+  }
+};
+
+export const createBackup = async () => {
+  try {
+    const response = await axios.post(`${API_URL}/backups`);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating backup:', error.message);
+    throw error;
+  }
+};
+
+export const restoreFromBackup = async (fileId) => {
+  try {
+    const response = await axios.post(`${API_URL}/backups/restore/${fileId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error restoring from backup:', error.message);
+    throw error;
+  }
+};

@@ -10,6 +10,7 @@ import Message from './components/Message';
 import Messages from './components/Messages';
 import Confessions from './components/Confessions';
 import BuildProfile from './components/BuildProfile';
+import BackupManager from './components/BackupManager';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -39,6 +40,7 @@ function App() {
               <Route path="/confessions" element={<Confessions />} />
               <Route path="/profileD/:id" element={<ProfilePage />} />
               <Route path="/build-profile" element={<BuildProfile />} />
+              <Route path="/backup-manager" element={<BackupManager />} />
             </Route>
           </Route>
 

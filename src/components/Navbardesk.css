@@ -74,6 +74,21 @@
   color: white !important;
 }
 
+.backup-manager-btn {
+  background-color: #343a40;
+  border-radius: 20px;
+  padding: 8px 15px !important;
+  transition: all 0.3s ease;
+  color: #dc3545 !important;
+  border: 1px solid #dc3545;
+  margin-left: 10px;
+}
+
+.backup-manager-btn:hover, .backup-manager-btn.active {
+  background-color: #dc3545;
+  color: white !important;
+}
+
 .logout-btn {
   border-radius: 20px;
   padding: 8px 15px;

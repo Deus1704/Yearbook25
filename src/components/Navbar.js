@@ -14,6 +14,12 @@ const Navbardesk = () => {
   const { currentUser } = useAuth();
   const [expanded, setExpanded] = useState(false);
 
+  // Check if user is admin
+  const isAdmin = currentUser && currentUser.email &&
+    (currentUser.email === 'admin@iitgn.ac.in' ||
+     currentUser.email === 'yearbook@iitgn.ac.in' ||
+     currentUser.email === 'maprc@iitgn.ac.in');
+
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -131,6 +137,16 @@ const Navbardesk = () => {
                     >
                       <i className="fas fa-plus-circle me-1"></i> Build Your Profile
                     </Nav.Link>
+                    {isAdmin && (
+                      <Nav.Link
+                        as={Link}
+                        to="/backup-manager"
+                        className={`backup-manager-btn ${isActive('/backup-manager') ? 'active' : ''}`}
+                        onClick={() => setExpanded(false)}
+                      >
+                        <i className="fas fa-database me-1"></i> Backup Manager
+                      </Nav.Link>
+                    )}
                     <Button
                       variant="outline-light"
                       onClick={() => {

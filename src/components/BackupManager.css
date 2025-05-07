@@ -1,0 +1,62 @@
+.backup-manager-container {
+  max-width: 900px;
+  padding: 20px;
+  margin-top: 2rem;
+}
+
+.backup-table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.backup-manager-container h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.backup-manager-container .table {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.backup-manager-container .table thead {
+  background-color: #f8f9fa;
+}
+
+.backup-manager-container .table th {
+  font-weight: 600;
+  padding: 12px 15px;
+}
+
+.backup-manager-container .table td {
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+
+.backup-manager-container .btn-primary {
+  background-color: #007bff;
+  border: none;
+  padding: 8px 16px;
+}
+
+.backup-manager-container .btn-warning {
+  background-color: #ffc107;
+  border: none;
+  color: #212529;
+}
+
+.backup-manager-container .alert {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .backup-manager-container {
+    padding: 15px;
+  }
+  
+  .backup-manager-container .table th,
+  .backup-manager-container .table td {
+    padding: 8px 10px;
+  }
+}
