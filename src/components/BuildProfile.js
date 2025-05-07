@@ -5,6 +5,8 @@ import './BuildProfile.css';
 import Navbardesk from './Navbar';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const BuildProfile = () => {
   const { currentUser } = useAuth();
@@ -14,7 +16,8 @@ const BuildProfile = () => {
     designation: '',
     description: '',
     image: null,
-    user_id: ''
+    user_id: '',
+    email: ''
   });
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true); // Start with loading true
@@ -69,14 +72,16 @@ const BuildProfile = () => {
             designation: profile.designation,
             description: profile.description,
             image: null, // Can't set the image directly, user needs to reupload if they want to change it
-            user_id: currentUser.uid
+            user_id: currentUser.uid,
+            email: currentUser.email || ''
           });
         } else {
           console.log('No existing profile found, creating new profile');
           // New profile
           setFormData(prev => ({
             ...prev,
-            user_id: currentUser.uid
+            user_id: currentUser.uid,
+            email: currentUser.email || ''
           }));
           setIsUpdate(false);
         }
@@ -145,6 +150,20 @@ const BuildProfile = () => {
           } catch (fetchErr) {
             console.error('Error fetching existing profile:', fetchErr);
           }
+        } else if (err.response.data.error === 'NotGraduating') {
+          // Show a fun toast notification for non-graduating students
+          toast.info(err.response.data.message, {
+            position: "top-center",
+            autoClose: 8000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "colored",
+            icon: "🎓"
+          });
+          setError('Only graduating students can create profiles.');
         } else {
           setError(`Failed to ${isUpdate ? 'update' : 'create'} profile: ${err.response.data.error}`);
         }
@@ -159,6 +178,7 @@ const BuildProfile = () => {
   return (
     <>
       <Navbardesk />
+      <ToastContainer />
       <Container className="build-profile-container">
         <h2 className="text-center mb-4">{isUpdate ? 'Update Your Profile' : 'Build Your Profile'}</h2>
 
@@ -178,6 +198,21 @@ const BuildProfile = () => {
 
         {!loading && (
         <Form onSubmit={handleSubmit} className="build-profile-form">
+          <Form.Group className="mb-3">
+            <Form.Label>Email</Form.Label>
+            <Form.Control
+              type="email"
+              name="email"
+              value={formData.email}
+              readOnly
+              disabled
+              className="bg-light"
+            />
+            <Form.Text className="text-muted">
+              Email is automatically filled from your Google account
+            </Form.Text>
+          </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Name</Form.Label>
             <Form.Control
