@@ -1,9 +1,11 @@
 const express = require('express');
 const multer = require('multer');
+const path = require('path');
+const bodyParser = require('body-parser');
 require('dotenv').config();
 
-// Import database
-const db = require('./models/database');
+// Import database manager
+const dbManager = require('./models/database-manager');
 
 const app = express();
 
@@ -143,17 +145,15 @@ app.get('/cors-test', (req, res) => {
 
 
 
-// Routes
-const profileRoutes = require('./routes/profiles');
-const confessionRoutes = require('./routes/confessions');
-const messageRoutes = require('./routes/messages');
-const memoryRoutes = require('./routes/memories');
+// Get routes based on database type
+const routes = dbManager.getRoutes();
 const corsProxyRoutes = require('./routes/cors-proxy');
 
-app.use('/api/profiles', profileRoutes);
-app.use('/api/confessions', confessionRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/memories', memoryRoutes);
+// Use routes
+app.use('/api/profiles', routes.profiles);
+app.use('/api/confessions', routes.confessions);
+app.use('/api/messages', routes.messages);
+app.use('/api/memories', routes.memories);
 app.use('/api/cors-proxy', corsProxyRoutes);
 
 const PORT = process.env.PORT || 5000;
@@ -162,17 +162,39 @@ const PORT = process.env.PORT || 5000;
 async function startServer() {
   try {
     // Initialize the database
-    await db.init();
+    await dbManager.init();
+
+    // Log which database is being used
+    console.log(`Using ${dbManager.USE_MONGODB ? 'MongoDB' : 'SQLite'} database`);
 
     // Start the server
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (err) {
-    console.error('Failed to initialize with Google Drive:', err);
-    console.log('Starting server in basic mode without Google Drive integration...');
+    console.error('Failed to initialize database:', err);
+    console.log('Starting server in basic mode without database integration...');
 
-    // Start the server anyway without Google Drive
+    // Start the server anyway without database
     app.listen(PORT, () => console.log(`Server running on port ${PORT} (basic mode)`));
   }
 }
 
-startServer();
+// Add a command line argument to migrate data if needed
+if (process.argv.includes('--migrate-to-mongodb')) {
+  (async () => {
+    try {
+      console.log('Starting migration from SQLite to MongoDB...');
+      const result = await dbManager.migrateToMongoDB();
+      if (result) {
+        console.log('Migration completed successfully');
+      } else {
+        console.error('Migration failed');
+      }
+      process.exit(result ? 0 : 1);
+    } catch (error) {
+      console.error('Migration error:', error);
+      process.exit(1);
+    }
+  })();
+} else {
+  startServer();
+}

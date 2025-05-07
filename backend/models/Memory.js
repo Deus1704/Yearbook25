@@ -7,13 +7,20 @@ const MemorySchema = new Schema({
     type: String,
     default: 'Memory'
   },
+  // Store image in two ways:
+  // 1. Directly in MongoDB (for small images or fallback)
   image: {
-    type: Buffer,
-    required: true
+    type: Buffer
   },
   contentType: {
-    type: String,
-    required: true
+    type: String
+  },
+  // 2. Reference to Google Drive (preferred for larger images)
+  imageId: {
+    type: String
+  },
+  imageUrl: {
+    type: String
   },
   uploadedBy: {
     type: String

@@ -2,12 +2,13 @@
   "name": "yearbook-backend",
   "version": "1.0.0",
   "description": "Backend for the yearbook application",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
     "prepare-render": "node scripts/prepare-render-deployment.js",
-    "postinstall": "npm run prepare-render || true"
+    "postinstall": "npm run prepare-render || true",
+    "migrate": "node server.js --migrate-to-mongodb"
   },
   "engines": {
     "node": "18.x"
@@ -20,6 +21,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "googleapis": "^129.0.0",
+    "mongoose": "^8.2.0",
     "multer": "^1.4.5-lts.1",
     "sql.js": "^1.8.0",
     "streamifier": "^0.1.1"
