@@ -211,6 +211,25 @@ async function listBackups() {
 }
 
 /**
+ * Get the most recent backup
+ * @returns {Promise<Object|null>} - The most recent backup or null if none exists
+ */
+async function getMostRecentBackup() {
+  try {
+    console.log('Getting most recent backup...');
+
+    // Get all backups
+    const backups = await listBackups();
+
+    // Return the first backup (newest) or null if no backups exist
+    return backups.length > 0 ? backups[0] : null;
+  } catch (error) {
+    console.error('Error getting most recent backup:', error.message);
+    return null;
+  }
+}
+
+/**
  * Restore data from a backup
  * @param {string} fileId - The ID of the backup file in Google Drive
  * @returns {Promise<Object>} - The restore result
@@ -375,5 +394,6 @@ module.exports = {
   initBackupService,
   createBackup,
   listBackups,
+  getMostRecentBackup,
   restoreFromBackup
 };
