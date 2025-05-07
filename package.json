@@ -10,6 +10,6 @@
     "prepare-render": "cd backend && node scripts/prepare-render-deployment.js"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "18.x"
   }
 }

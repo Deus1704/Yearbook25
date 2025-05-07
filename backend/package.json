@@ -9,6 +9,9 @@
     "prepare-render": "node scripts/prepare-render-deployment.js",
     "postinstall": "npm run prepare-render || true"
   },
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "axios": "^1.7.9",
