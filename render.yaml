@@ -4,9 +4,9 @@ services:
     env: node
     plan: free
     region: singapore # Choose a region close to your users
-    buildCommand: npm run build
-    startCommand: npm run start
-    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: backend
     envVars:
       - key: PORT
         value: 5000
