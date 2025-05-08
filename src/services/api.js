@@ -267,11 +267,8 @@ export const deleteMessage = async (id) => {
 };
 
 // Memory Images related API calls
-export const getMemoryImages = async (isAdmin = false) => {
-  const url = isAdmin ?
-    `${API_URL}/memories?admin=true` :
-    `${API_URL}/memories`;
-
+export const getMemoryImages = async () => {
+  const url = `${API_URL}/memories`;
   const response = await axios.get(url);
   return response.data;
 };

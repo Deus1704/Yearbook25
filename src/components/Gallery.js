@@ -182,7 +182,7 @@ const Gallery = () => {
         name: image.name || `Memory ${index + 1}`,
         type: 'memory',
         imageUrl: getMemoryImageUrl(image.id),
-        approved: false // New images are not approved by default
+        approved: true // Images are now automatically approved
       }));
 
       // Add the new images to allImages
@@ -193,8 +193,8 @@ const Gallery = () => {
       setSelectedFiles([]);
       setPreviewUrls([]);
 
-      // Show success message with clear indication about the review process using toast
-      setToastMessage(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your image${uploadedImages.length !== 1 ? 's are' : ' is'} now under review and will be visible in Memory Lane after admin approval.`);
+      // Show success message
+      setToastMessage(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your image${uploadedImages.length !== 1 ? 's are' : ' is'} now visible in Memory Lane.`);
       setToastType('success');
       setShowToast(true);
     } catch (error) {
@@ -229,7 +229,7 @@ const Gallery = () => {
         // Fetch both profiles and memory images in parallel
         const [profilesData, memoryImagesData] = await Promise.all([
           getProfiles(),
-          getMemoryImages(isAdmin) // Pass isAdmin to get all images if admin
+          getMemoryImages() // No need for admin parameter anymore
         ]);
 
         setProfiles(profilesData);
