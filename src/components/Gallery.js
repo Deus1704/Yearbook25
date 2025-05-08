@@ -16,6 +16,8 @@ import { useAuth } from '../context/AuthContext';
 import Toast from './Toast';
 import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeholder';
 import DirectImageLoader from './DirectImageLoader';
+import GoogleDriveImage from './GoogleDriveImage';
+import { isGoogleDriveUrl } from '../utils/googleDriveUtils';
 
 const Gallery = () => {
   const { currentUser } = useAuth();
@@ -376,17 +378,30 @@ const Gallery = () => {
       imageSrc = memoryPlaceholder;
     }
 
+    // Check if it's a Google Drive URL
+    const isGoogleDrive = imageSrc && typeof imageSrc === 'string' && isGoogleDriveUrl(imageSrc);
+
     return (
       <div
         className={`memory-item ${sizeClass} ${rotationClass}`}
         key={`${image.id || 'temp'}-${index}`}
       >
-        <DirectImageLoader
-          src={imageSrc}
-          alt={image.name || 'Memory image'}
-          className="memory-image"
-          type="memory"
-        />
+        {isGoogleDrive ? (
+          <GoogleDriveImage
+            src={imageSrc}
+            alt={image.name || 'Memory image'}
+            className="memory-image"
+            type="memory"
+            fallbackSrc={image.id ? getMemoryImageUrl(image.id) : memoryPlaceholder}
+          />
+        ) : (
+          <DirectImageLoader
+            src={imageSrc}
+            alt={image.name || 'Memory image'}
+            className="memory-image"
+            type="memory"
+          />
+        )}
       </div>
     );
   };
@@ -575,15 +590,22 @@ const Gallery = () => {
                 <div className="gallery-grid">
                   {profiles.map((profile) => (
                     <div className="gallery-item" key={profile.id}>
-                      <img
-                        src={profile.tempImage || getProfileImageUrl(profile.id)}
-                        alt={profile.name}
-                        className="gallery-image"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = 'https://via.placeholder.com/200x200?text=No+Image';
-                        }}
-                      />
+                      {profile.image_url && isGoogleDriveUrl(profile.image_url) ? (
+                        <GoogleDriveImage
+                          src={profile.image_url}
+                          alt={profile.name}
+                          className="gallery-image"
+                          type="profile"
+                          fallbackSrc={getProfileImageUrl(profile.id)}
+                        />
+                      ) : (
+                        <DirectImageLoader
+                          src={profile.tempImage || profile.image_url || getProfileImageUrl(profile.id)}
+                          alt={profile.name}
+                          className="gallery-image"
+                          type="profile"
+                        />
+                      )}
                     </div>
                   ))}
                 </div>

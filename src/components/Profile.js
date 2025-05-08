@@ -5,6 +5,8 @@ import Navbardesk from './Navbar';
 import { getProfile, getProfileImageUrl } from '../services/api';
 import { profilePlaceholder } from '../assets/profile-placeholder';
 import DirectImageLoader from './DirectImageLoader';
+import GoogleDriveImage from './GoogleDriveImage';
+import { isGoogleDriveUrl } from '../utils/googleDriveUtils';
 
 const Profile = () => {
   const { id } = useParams();
@@ -68,12 +70,22 @@ const Profile = () => {
         <i className="fas fa-arrow-left"></i>
       </Link>
       <div className="profile-card1">
-        <DirectImageLoader
-          src={profile.image_url || getProfileImageUrl(profile.id)}
-          alt={profile.name}
-          className="profile-image1"
-          type="profile"
-        />
+        {profile.image_url && isGoogleDriveUrl(profile.image_url) ? (
+          <GoogleDriveImage
+            src={profile.image_url}
+            alt={profile.name}
+            className="profile-image1"
+            type="profile"
+            fallbackSrc={getProfileImageUrl(profile.id)}
+          />
+        ) : (
+          <DirectImageLoader
+            src={profile.image_url || getProfileImageUrl(profile.id)}
+            alt={profile.name}
+            className="profile-image1"
+            type="profile"
+          />
+        )}
         <div className="profile-details1">
           <h1>{profile.name}</h1>
           <p className="profile-designation1"><i className="fas fa-graduation-cap"></i> {profile.designation}</p>

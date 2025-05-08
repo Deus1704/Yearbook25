@@ -5,6 +5,7 @@ import { getProfile, addComment, getProfileImageUrl } from '../services/api';
 import { Spinner, Alert, Button } from 'react-bootstrap';
 import { profilePlaceholder } from '../assets/profile-placeholder';
 import DirectImageLoader from './DirectImageLoader';
+import GoogleDriveImage from './GoogleDriveImage';
 
 const ProfileDetail = () => {
   const { id } = useParams();
@@ -71,12 +72,22 @@ const ProfileDetail = () => {
         {/* Left column - Profile details */}
         <div className="profile-details-column">
           <div className="profile-header">
-            <DirectImageLoader
-              src={profile.image_url || getProfileImageUrl(profile.id)}
-              alt={profile.name}
-              className="profile-detail-img"
-              type="profile"
-            />
+            {profile.image_url && profile.image_url.includes('drive.google.com') ? (
+              <GoogleDriveImage
+                src={profile.image_url}
+                alt={profile.name}
+                className="profile-detail-img"
+                type="profile"
+                fallbackSrc={getProfileImageUrl(profile.id)}
+              />
+            ) : (
+              <DirectImageLoader
+                src={profile.image_url || getProfileImageUrl(profile.id)}
+                alt={profile.name}
+                className="profile-detail-img"
+                type="profile"
+              />
+            )}
             <div className="profile-info">
               <h2 className="profile-name">{profile.name}</h2>
               <p className="degree"><i className="fas fa-graduation-cap me-2"></i>{profile.designation}</p>

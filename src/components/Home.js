@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { getProfiles, getProfileImageUrl } from '../services/api';
 import { profilePlaceholder } from '../assets/profile-placeholder';
 import DirectImageLoader from './DirectImageLoader';
+import GoogleDriveImage from './GoogleDriveImage';
+import { isGoogleDriveUrl } from '../utils/googleDriveUtils';
 
 const Home = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -131,12 +133,22 @@ const Home = () => {
                   >
                     <div className="profile-gallery-card">
                       <div className="profile-gallery-img-container">
-                        <DirectImageLoader
-                          src={profile.image_url || getProfileImageUrl(profile.id)}
-                          className="profile-gallery-img"
-                          alt={profile.name}
-                          type="profile"
-                        />
+                        {profile.image_url && isGoogleDriveUrl(profile.image_url) ? (
+                          <GoogleDriveImage
+                            src={profile.image_url}
+                            className="profile-gallery-img"
+                            alt={profile.name}
+                            type="profile"
+                            fallbackSrc={getProfileImageUrl(profile.id)}
+                          />
+                        ) : (
+                          <DirectImageLoader
+                            src={profile.image_url || getProfileImageUrl(profile.id)}
+                            className="profile-gallery-img"
+                            alt={profile.name}
+                            type="profile"
+                          />
+                        )}
                       </div>
                       <div className="profile-gallery-info">
                         <h5 className="profile-gallery-name">{profile.name}</h5>
