@@ -198,15 +198,56 @@ async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FO
 }
 
 /**
+ * Check if a file exists in Google Drive
+ * @param {string} fileId - The ID of the file to check
+ * @returns {Promise<boolean>} - True if the file exists, false otherwise
+ */
+async function fileExists(fileId) {
+  try {
+    // Check if drive client is initialized
+    if (!drive) {
+      console.error('Google Drive client not initialized');
+      return false;
+    }
+
+    // Try to get the file metadata
+    await drive.files.get({
+      fileId: fileId,
+      fields: 'id',
+    });
+
+    // If no error is thrown, the file exists
+    return true;
+  } catch (error) {
+    // If the error is a 404, the file doesn't exist
+    if (error.response && error.response.status === 404) {
+      console.log(`File with ID ${fileId} does not exist in Google Drive`);
+      return false;
+    }
+
+    // For other errors, log and return false
+    console.error('Error checking if file exists in Google Drive:', error.message);
+    return false;
+  }
+}
+
+/**
  * Get a file from Google Drive
  * @param {string} fileId - The ID of the file to get
- * @returns {Promise<Object>} - The file metadata and content
+ * @returns {Promise<Object>} - The file metadata and content, or null if the file doesn't exist
  */
 async function getFile(fileId) {
   try {
     // Check if drive client is initialized
     if (!drive) {
       throw new Error('Google Drive client not initialized. Check your credentials.');
+    }
+
+    // First check if the file exists
+    const exists = await fileExists(fileId);
+    if (!exists) {
+      console.log(`File with ID ${fileId} does not exist, returning null`);
+      return null;
     }
 
     // Get the file metadata
@@ -227,6 +268,13 @@ async function getFile(fileId) {
     };
   } catch (error) {
     console.error('Error getting file from Google Drive:', error.message);
+
+    // If the error is a 404, the file doesn't exist
+    if (error.response && error.response.status === 404) {
+      console.log(`File with ID ${fileId} not found, returning null`);
+      return null;
+    }
+
     throw error;
   }
 }
@@ -311,6 +359,35 @@ async function listFiles(folderId = YEARBOOK_FOLDER_ID) {
   }
 }
 
+/**
+ * Check multiple files in Google Drive and return their status
+ * @param {Array<string>} fileIds - Array of file IDs to check
+ * @returns {Promise<Object>} - Object with fileId as key and boolean existence status as value
+ */
+async function checkFilesExistence(fileIds) {
+  try {
+    // Check if drive client is initialized
+    if (!drive) {
+      console.error('Google Drive client not initialized');
+      return {};
+    }
+
+    // Create a map to store results
+    const results = {};
+
+    // Check each file ID
+    for (const fileId of fileIds) {
+      if (!fileId) continue;
+      results[fileId] = await fileExists(fileId);
+    }
+
+    return results;
+  } catch (error) {
+    console.error('Error checking files existence in Google Drive:', error.message);
+    return {};
+  }
+}
+
 module.exports = {
   initGoogleDrive,
   uploadFile,
@@ -318,4 +395,6 @@ module.exports = {
   deleteFile,
   createFolder,
   listFiles,
+  fileExists,
+  checkFilesExistence,
 };

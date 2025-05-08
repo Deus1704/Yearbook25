@@ -4,10 +4,11 @@ const path = require('path');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
-// Import database manager, backup scheduler, and auto-restore service
+// Import database manager, backup scheduler, auto-restore service, and scheduled tasks
 const dbManager = require('./models/database-manager');
 const backupScheduler = require('./scripts/schedule-backup');
 const autoRestoreService = require('./services/autoRestoreService');
+const scheduledTasks = require('./services/scheduledTasks');
 
 const app = express();
 
@@ -199,6 +200,15 @@ async function startServer() {
     } catch (backupErr) {
       console.error('Warning: Failed to initialize backup service:', backupErr.message);
       console.log('Server will run without automatic backups');
+    }
+
+    // Initialize scheduled tasks
+    try {
+      scheduledTasks.initScheduledTasks();
+      console.log('Scheduled tasks initialized successfully');
+    } catch (tasksErr) {
+      console.error('Warning: Failed to initialize scheduled tasks:', tasksErr.message);
+      console.log('Server will run without scheduled tasks');
     }
 
     // Start the server

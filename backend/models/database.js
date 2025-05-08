@@ -33,6 +33,7 @@ class Database {
           description TEXT NOT NULL,
           image_id TEXT,
           image_url TEXT,
+          status TEXT DEFAULT 'active',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
@@ -58,6 +59,7 @@ class Database {
           approved INTEGER DEFAULT 0,
           approved_by TEXT,
           approved_at DATETIME,
+          status TEXT DEFAULT 'active',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);

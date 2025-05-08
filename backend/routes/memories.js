@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const db = require('../models/database');
 const fileStorage = require('../services/fileStorage');
+const googleDrive = require('../services/googleDrive');
 const { sendAdminNotification } = require('../services/notificationService');
 
 // Multer configuration for handling file uploads
@@ -16,12 +17,27 @@ const upload = multer({
 // Get all memory images
 router.get('/', async (req, res) => {
   try {
-    // Return all images regardless of approval status
-    const query = `
-      SELECT id, name, image_id, image_url, uploaded_by, approved, approved_by, approved_at, created_at
-      FROM memories
-      ORDER BY created_at DESC
-    `;
+    // By default, filter out deleted images
+    // If includeDeleted=true is passed as a query parameter, include deleted images
+    const includeDeleted = req.query.includeDeleted === 'true';
+
+    let query;
+    if (includeDeleted) {
+      // Return all images including deleted ones
+      query = `
+        SELECT id, name, image_id, image_url, uploaded_by, approved, approved_by, approved_at, status, created_at
+        FROM memories
+        ORDER BY created_at DESC
+      `;
+    } else {
+      // Return only active images
+      query = `
+        SELECT id, name, image_id, image_url, uploaded_by, approved, approved_by, approved_at, status, created_at
+        FROM memories
+        WHERE status != 'deleted' OR status IS NULL
+        ORDER BY created_at DESC
+      `;
+    }
 
     const rows = db.all(query);
     res.json(rows || []);
@@ -51,14 +67,30 @@ router.get('/:id', async (req, res) => {
 // Get memory image file
 router.get('/:id/image', async (req, res) => {
   try {
-    const memory = db.get('SELECT image_id, image_url FROM memories WHERE id = ?', [req.params.id]);
+    const memory = db.get('SELECT image_id, image_url, status FROM memories WHERE id = ?', [req.params.id]);
 
     if (!memory || (!memory.image_id && !memory.image_url)) {
       return res.status(404).json({ message: 'Image not found' });
     }
 
+    // Check if the image is marked as deleted
+    if (memory.status === 'deleted') {
+      console.log(`Memory image ${req.params.id} is marked as deleted, returning 404`);
+      return res.status(404).json({ message: 'Image has been deleted', status: 'deleted' });
+    }
+
     // If we have a direct URL to the image, redirect to it
     if (memory.image_url) {
+      // First check if the file exists in Google Drive
+      const exists = await googleDrive.fileExists(memory.image_id);
+
+      if (!exists) {
+        // If the file doesn't exist, update the status and return 404
+        db.run('UPDATE memories SET status = ? WHERE id = ?', ['deleted', req.params.id]);
+        console.log(`Memory image ${req.params.id} not found in Google Drive, marked as deleted`);
+        return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
+      }
+
       // Set cache control headers before redirecting
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
@@ -70,6 +102,14 @@ router.get('/:id/image', async (req, res) => {
     try {
       const file = await fileStorage.getMemoryImage(memory.image_id);
 
+      // If the file is null, it means it doesn't exist in Google Drive
+      if (!file) {
+        // Update the status and return 404
+        db.run('UPDATE memories SET status = ? WHERE id = ?', ['deleted', req.params.id]);
+        console.log(`Memory image ${req.params.id} not found in Google Drive, marked as deleted`);
+        return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
+      }
+
       res.writeHead(200, {
         'Content-Type': file.metadata.mimeType || 'image/jpeg',
         'Content-Length': file.content.length,
@@ -80,6 +120,18 @@ router.get('/:id/image', async (req, res) => {
       res.end(file.content);
     } catch (driveError) {
       console.error('Error fetching image from Google Drive:', driveError);
+
+      // If we get here, there was an error fetching the image
+      // Let's check if the file exists before returning an error
+      const exists = await googleDrive.fileExists(memory.image_id);
+
+      if (!exists) {
+        // If the file doesn't exist, update the status and return 404
+        db.run('UPDATE memories SET status = ? WHERE id = ?', ['deleted', req.params.id]);
+        console.log(`Memory image ${req.params.id} not found in Google Drive, marked as deleted`);
+        return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
+      }
+
       return res.status(500).json({ error: 'Error fetching image from Google Drive' });
     }
   } catch (err) {
@@ -275,6 +327,85 @@ router.get('/pending/all', async (req, res) => {
     res.json(rows || []);
   } catch (err) {
     console.error('Error getting pending approvals:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Check and update status of memory images
+router.post('/check-status', async (req, res) => {
+  try {
+    // Get all memories
+    const memories = db.all(`
+      SELECT id, name, image_id, image_url, status
+      FROM memories
+      WHERE image_id IS NOT NULL
+    `);
+
+    if (!memories || memories.length === 0) {
+      return res.json({ message: 'No memories found to check', updated: 0 });
+    }
+
+    // Check if the files exist in Google Drive
+    const checkedMemories = await fileStorage.checkFilesExistence(memories);
+
+    // Update the status of each memory
+    let updatedCount = 0;
+
+    for (const memory of checkedMemories) {
+      // If the file doesn't exist and the status is not already 'deleted'
+      if (!memory.exists && memory.status !== 'deleted') {
+        db.run(
+          'UPDATE memories SET status = ? WHERE id = ?',
+          ['deleted', memory.id]
+        );
+        updatedCount++;
+      }
+      // If the file exists but the status is 'deleted', update it back to 'active'
+      else if (memory.exists && memory.status === 'deleted') {
+        db.run(
+          'UPDATE memories SET status = ? WHERE id = ?',
+          ['active', memory.id]
+        );
+        updatedCount++;
+      }
+    }
+
+    res.json({
+      message: `Checked ${checkedMemories.length} memories, updated ${updatedCount}`,
+      updated: updatedCount,
+      total: checkedMemories.length
+    });
+  } catch (err) {
+    console.error('Error checking memory status:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark a memory as deleted
+router.put('/:id/mark-deleted', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if the memory exists
+    const memory = db.get('SELECT * FROM memories WHERE id = ?', [id]);
+
+    if (!memory) {
+      return res.status(404).json({ message: 'Memory not found' });
+    }
+
+    // Update the memory status
+    db.run(
+      'UPDATE memories SET status = ? WHERE id = ?',
+      ['deleted', id]
+    );
+
+    res.json({
+      id,
+      message: 'Memory marked as deleted successfully',
+      status: 'deleted'
+    });
+  } catch (err) {
+    console.error('Error marking memory as deleted:', err);
     return res.status(500).json({ error: err.message });
   }
 });

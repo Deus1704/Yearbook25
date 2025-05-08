@@ -65,14 +65,15 @@ async function uploadProfileImage(imageBuffer, userId) {
 /**
  * Get a profile image from Google Drive
  * @param {string} fileId - The ID of the image to get
- * @returns {Promise<Object>} - The image metadata and content
+ * @returns {Promise<Object>} - The image metadata and content, or null if the file doesn't exist
  */
 async function getProfileImage(fileId) {
   try {
-    return await googleDrive.getFile(fileId);
+    const file = await googleDrive.getFile(fileId);
+    return file;
   } catch (error) {
     console.error('Error getting profile image:', error.message);
-    throw error;
+    return null;
   }
 }
 
@@ -109,14 +110,43 @@ async function uploadMemoryImage(imageBuffer, name) {
 /**
  * Get a memory image from Google Drive
  * @param {string} fileId - The ID of the image to get
- * @returns {Promise<Object>} - The image metadata and content
+ * @returns {Promise<Object>} - The image metadata and content, or null if the file doesn't exist
  */
 async function getMemoryImage(fileId) {
   try {
-    return await googleDrive.getFile(fileId);
+    const file = await googleDrive.getFile(fileId);
+    return file;
   } catch (error) {
     console.error('Error getting memory image:', error.message);
-    throw error;
+    return null;
+  }
+}
+
+/**
+ * Check if multiple files exist in Google Drive
+ * @param {Array<Object>} files - Array of objects with fileId property
+ * @returns {Promise<Array<Object>>} - Array of objects with fileId and exists properties
+ */
+async function checkFilesExistence(files) {
+  try {
+    // Extract file IDs
+    const fileIds = files.map(file => file.fileId || file.image_id).filter(Boolean);
+
+    // Check existence
+    const existenceResults = await googleDrive.checkFilesExistence(fileIds);
+
+    // Map results back to original files
+    return files.map(file => {
+      const fileId = file.fileId || file.image_id;
+      return {
+        ...file,
+        exists: fileId ? !!existenceResults[fileId] : false
+      };
+    });
+  } catch (error) {
+    console.error('Error checking files existence:', error.message);
+    // Return original files with exists = false as fallback
+    return files.map(file => ({ ...file, exists: false }));
   }
 }
 
@@ -204,4 +234,5 @@ module.exports = {
   deleteFile,
   listProfileImages,
   listMemoryImages,
+  checkFilesExistence,
 };

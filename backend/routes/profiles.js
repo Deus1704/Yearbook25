@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const db = require('../models/database');
 const fileStorage = require('../services/fileStorage');
+const googleDrive = require('../services/googleDrive');
 const checkGraduatingStudent = require('../middleware/graduatingStudentCheck');
 
 // Multer configuration for handling file uploads
@@ -14,13 +15,33 @@ const upload = multer({
 // Get all profiles
 router.get('/', async (req, res) => {
   try {
-    const rows = db.all(`
-      SELECT p.*,
-             COUNT(c.id) as comment_count
-      FROM profiles p
-      LEFT JOIN comments c ON p.id = c.profile_id
-      GROUP BY p.id
-    `);
+    // By default, filter out deleted profiles
+    // If includeDeleted=true is passed as a query parameter, include deleted profiles
+    const includeDeleted = req.query.includeDeleted === 'true';
+
+    let query;
+    if (includeDeleted) {
+      // Return all profiles including deleted ones
+      query = `
+        SELECT p.*,
+               COUNT(c.id) as comment_count
+        FROM profiles p
+        LEFT JOIN comments c ON p.id = c.profile_id
+        GROUP BY p.id
+      `;
+    } else {
+      // Return only active profiles
+      query = `
+        SELECT p.*,
+               COUNT(c.id) as comment_count
+        FROM profiles p
+        LEFT JOIN comments c ON p.id = c.profile_id
+        WHERE p.status != 'deleted' OR p.status IS NULL
+        GROUP BY p.id
+      `;
+    }
+
+    const rows = db.all(query);
     res.json(rows);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -297,11 +318,17 @@ router.get('/:id/image', async (req, res) => {
     console.log(`Getting image for profile ID: ${req.params.id}`);
 
     // First check if we have Google Drive info
-    const profile = db.get('SELECT image_id, image_url, image FROM profiles WHERE id = ?', [req.params.id]);
+    const profile = db.get('SELECT image_id, image_url, image, status FROM profiles WHERE id = ?', [req.params.id]);
 
     if (!profile) {
       console.log(`Profile not found with ID: ${req.params.id}`);
       return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    // Check if the profile is marked as deleted
+    if (profile.status === 'deleted') {
+      console.log(`Profile ${req.params.id} is marked as deleted, returning 404`);
+      return res.status(404).json({ message: 'Profile has been deleted', status: 'deleted' });
     }
 
     console.log('Profile image data:', {
@@ -309,11 +336,24 @@ router.get('/:id/image', async (req, res) => {
       hasImageId: !!profile.image_id,
       hasDirectImage: !!profile.image,
       imageUrl: profile.image_url,
-      imageId: profile.image_id
+      imageId: profile.image_id,
+      status: profile.status
     });
 
     // If we have a direct URL to the image, redirect to it
     if (profile.image_url) {
+      // First check if the file exists in Google Drive
+      if (profile.image_id) {
+        const exists = await googleDrive.fileExists(profile.image_id);
+
+        if (!exists) {
+          // If the file doesn't exist, update the status and return 404
+          db.run('UPDATE profiles SET status = ? WHERE id = ?', ['deleted', req.params.id]);
+          console.log(`Profile image ${req.params.id} not found in Google Drive, marked as deleted`);
+          return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
+        }
+      }
+
       console.log(`Redirecting to direct image URL: ${profile.image_url}`);
 
       // Set cache control headers before redirecting
@@ -328,6 +368,16 @@ router.get('/:id/image', async (req, res) => {
     if (profile.image_id) {
       console.log(`Fetching image from Google Drive with ID: ${profile.image_id}`);
 
+      // First check if the file exists in Google Drive
+      const exists = await googleDrive.fileExists(profile.image_id);
+
+      if (!exists) {
+        // If the file doesn't exist, update the status and return 404
+        db.run('UPDATE profiles SET status = ? WHERE id = ?', ['deleted', req.params.id]);
+        console.log(`Profile image ${req.params.id} not found in Google Drive, marked as deleted`);
+        return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
+      }
+
       // Check if Google Drive integration is available
       const googleDriveAvailable = typeof fileStorage.getProfileImage === 'function';
 
@@ -337,7 +387,10 @@ router.get('/:id/image', async (req, res) => {
 
           if (!file || !file.content) {
             console.error('Invalid file data returned from Google Drive');
-            throw new Error('Invalid file data');
+            // Mark the profile as deleted
+            db.run('UPDATE profiles SET status = ? WHERE id = ?', ['deleted', req.params.id]);
+            console.log(`Profile image ${req.params.id} not found in Google Drive, marked as deleted`);
+            return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
           }
 
           console.log('Successfully retrieved image from Google Drive');
@@ -358,6 +411,17 @@ router.get('/:id/image', async (req, res) => {
         } catch (driveError) {
           console.error('Error fetching image from Google Drive:', driveError);
           console.log('Error details:', driveError.message);
+
+          // Check if the file exists before falling back
+          const exists = await googleDrive.fileExists(profile.image_id);
+
+          if (!exists) {
+            // If the file doesn't exist, update the status and return 404
+            db.run('UPDATE profiles SET status = ? WHERE id = ?', ['deleted', req.params.id]);
+            console.log(`Profile image ${req.params.id} not found in Google Drive, marked as deleted`);
+            return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
+          }
+
           console.log('Falling back to database image if available');
           // Fall through to check for database image
         }
@@ -412,6 +476,85 @@ router.get('/:id/image', async (req, res) => {
   } catch (err) {
     console.error('Error getting profile image:', err);
     console.error('Stack trace:', err.stack);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Check and update status of profile images
+router.post('/check-status', async (req, res) => {
+  try {
+    // Get all profiles with Google Drive images
+    const profiles = db.all(`
+      SELECT id, name, image_id, image_url, status
+      FROM profiles
+      WHERE image_id IS NOT NULL
+    `);
+
+    if (!profiles || profiles.length === 0) {
+      return res.json({ message: 'No profiles found to check', updated: 0 });
+    }
+
+    // Check if the files exist in Google Drive
+    const checkedProfiles = await fileStorage.checkFilesExistence(profiles);
+
+    // Update the status of each profile
+    let updatedCount = 0;
+
+    for (const profile of checkedProfiles) {
+      // If the file doesn't exist and the status is not already 'deleted'
+      if (!profile.exists && profile.status !== 'deleted') {
+        db.run(
+          'UPDATE profiles SET status = ? WHERE id = ?',
+          ['deleted', profile.id]
+        );
+        updatedCount++;
+      }
+      // If the file exists but the status is 'deleted', update it back to 'active'
+      else if (profile.exists && profile.status === 'deleted') {
+        db.run(
+          'UPDATE profiles SET status = ? WHERE id = ?',
+          ['active', profile.id]
+        );
+        updatedCount++;
+      }
+    }
+
+    res.json({
+      message: `Checked ${checkedProfiles.length} profiles, updated ${updatedCount}`,
+      updated: updatedCount,
+      total: checkedProfiles.length
+    });
+  } catch (err) {
+    console.error('Error checking profile status:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark a profile as deleted
+router.put('/:id/mark-deleted', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if the profile exists
+    const profile = db.get('SELECT * FROM profiles WHERE id = ?', [id]);
+
+    if (!profile) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    // Update the profile status
+    db.run(
+      'UPDATE profiles SET status = ? WHERE id = ?',
+      ['deleted', id]
+    );
+
+    res.json({
+      id,
+      message: 'Profile marked as deleted successfully',
+      status: 'deleted'
+    });
+  } catch (err) {
+    console.error('Error marking profile as deleted:', err);
     return res.status(500).json({ error: err.message });
   }
 });
