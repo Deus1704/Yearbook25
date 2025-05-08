@@ -37,14 +37,39 @@ const BuildProfile = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      console.log('Selected image file:', {
+        name: file.name,
+        type: file.type,
+        size: `${(file.size / 1024).toFixed(2)} KB`
+      });
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file (JPG, PNG, GIF, etc.)');
+        return;
+      }
+
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        setError(`Image file is too large. Maximum size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+        return;
+      }
+
       setFormData(prev => ({
         ...prev,
         image: file
       }));
+
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
+        console.log('Image preview created successfully');
+      };
+      reader.onerror = () => {
+        console.error('Error reading file:', reader.error);
+        setError('Error reading image file. Please try another image.');
       };
       reader.readAsDataURL(file);
     }
@@ -108,21 +133,65 @@ const BuildProfile = () => {
     setError('');
     setSuccess(false);
 
+    // Validate image is provided for new profiles
+    if (!isUpdate && !formData.image) {
+      setError('Please select a profile image');
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log('Submitting profile form, isUpdate:', isUpdate);
+      console.log('Form data:', {
+        name: formData.name,
+        designation: formData.designation,
+        description: formData.description,
+        user_id: formData.user_id,
+        email: formData.email,
+        hasImage: !!formData.image
+      });
 
       if (isUpdate && existingProfile) {
         console.log('Updating existing profile ID:', existingProfile.id);
         // Update existing profile
         const result = await updateProfile(existingProfile.id, formData);
         console.log('Profile updated successfully:', result);
+
+        // Check if image_url and image_id are present in the response
+        if (formData.image && (!result.image_url || !result.image_id)) {
+          console.warn('Warning: Profile updated but image may not have been properly associated', {
+            image_url: result.image_url,
+            image_id: result.image_id
+          });
+          // We'll still show success but log the warning
+        }
+
         setSuccess(true);
         setError('');
+
+        // Refresh the profile data to ensure we have the latest
+        try {
+          const refreshedProfile = await getProfileByUserId(currentUser.uid);
+          setExistingProfile(refreshedProfile);
+          console.log('Profile refreshed after update:', refreshedProfile);
+        } catch (refreshErr) {
+          console.error('Error refreshing profile after update:', refreshErr);
+        }
       } else {
         console.log('Creating new profile');
         // Create new profile
         const result = await createProfile(formData);
         console.log('Profile created successfully:', result);
+
+        // Check if image_url and image_id are present in the response
+        if (!result.image_url || !result.image_id) {
+          console.warn('Warning: Profile created but image may not have been properly associated', {
+            image_url: result.image_url,
+            image_id: result.image_id
+          });
+          // We'll still show success but log the warning
+        }
+
         setSuccess(true);
         setIsUpdate(true); // Now it's an update for future submissions
 
@@ -131,6 +200,18 @@ const BuildProfile = () => {
         const updatedProfile = await getProfileByUserId(currentUser.uid);
         console.log('Retrieved updated profile:', updatedProfile);
         setExistingProfile(updatedProfile);
+
+        // Show success toast
+        toast.success('Profile created successfully!', {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
       }
     } catch (err) {
       console.error(`Error ${isUpdate ? 'updating' : 'creating'} profile:`, err);
@@ -146,6 +227,7 @@ const BuildProfile = () => {
             if (existingProfile) {
               setExistingProfile(existingProfile);
               setIsUpdate(true);
+              console.log('Retrieved existing profile:', existingProfile);
             }
           } catch (fetchErr) {
             console.error('Error fetching existing profile:', fetchErr);
@@ -165,10 +247,20 @@ const BuildProfile = () => {
           });
           setError('Only graduating students can create profiles.');
         } else {
-          setError(`Failed to ${isUpdate ? 'update' : 'create'} profile: ${err.response.data.error}`);
+          const errorMsg = `Failed to ${isUpdate ? 'update' : 'create'} profile: ${err.response.data.error}`;
+          setError(errorMsg);
+          toast.error(errorMsg, {
+            position: "top-center",
+            autoClose: 5000,
+          });
         }
       } else {
-        setError(`Failed to ${isUpdate ? 'update' : 'create'} profile. Please try again.`);
+        const errorMsg = `Failed to ${isUpdate ? 'update' : 'create'} profile. Please try again.`;
+        setError(errorMsg);
+        toast.error(errorMsg, {
+          position: "top-center",
+          autoClose: 5000,
+        });
       }
     } finally {
       setLoading(false);

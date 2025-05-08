@@ -17,11 +17,23 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        console.log(`Fetching profile with ID: ${id}`);
         const data = await getProfile(id);
+        console.log('Profile data received:', {
+          id: data.id,
+          name: data.name,
+          designation: data.designation,
+          image_url: data.image_url,
+          image_id: data.image_id
+        });
         setProfile(data);
         setError(null);
       } catch (error) {
         console.error('Error fetching profile:', error);
+        if (error.response) {
+          console.error('Response status:', error.response.status);
+          console.error('Response data:', error.response.data);
+        }
         setError('Failed to load profile. Please try again.');
       } finally {
         setLoading(false);
@@ -70,6 +82,14 @@ const Profile = () => {
         <i className="fas fa-arrow-left"></i>
       </Link>
       <div className="profile-card1">
+        {/* Log image information for debugging */}
+        {console.log('Rendering profile image with:', {
+          image_url: profile.image_url,
+          image_id: profile.image_id,
+          isGoogleDriveUrl: profile.image_url ? isGoogleDriveUrl(profile.image_url) : false,
+          fallbackUrl: getProfileImageUrl(profile.id)
+        })}
+
         {profile.image_url && isGoogleDriveUrl(profile.image_url) ? (
           <GoogleDriveImage
             src={profile.image_url}
@@ -77,6 +97,7 @@ const Profile = () => {
             className="profile-image1"
             type="profile"
             fallbackSrc={getProfileImageUrl(profile.id)}
+            onError={(e) => console.error('GoogleDriveImage error:', e)}
           />
         ) : (
           <DirectImageLoader
@@ -84,6 +105,7 @@ const Profile = () => {
             alt={profile.name}
             className="profile-image1"
             type="profile"
+            onError={(e) => console.error('DirectImageLoader error:', e)}
           />
         )}
         <div className="profile-details1">

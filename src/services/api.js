@@ -119,41 +119,109 @@ export const addComment = async (profileId, comment) => {
 };
 
 export const createProfile = async (profileData) => {
-  const formData = new FormData();
-  Object.keys(profileData).forEach(key => {
-    formData.append(key, profileData[key]);
-  });
+  try {
+    console.log('Creating profile with data:', {
+      name: profileData.name,
+      designation: profileData.designation,
+      user_id: profileData.user_id,
+      email: profileData.email,
+      hasImage: !!profileData.image
+    });
 
-  const response = await axios.post(`${API_URL}/profiles`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+    const formData = new FormData();
+    Object.keys(profileData).forEach(key => {
+      if (key === 'image' && profileData[key]) {
+        console.log('Adding image to form data:', {
+          name: profileData[key].name,
+          type: profileData[key].type,
+          size: profileData[key].size
+        });
+      }
+      formData.append(key, profileData[key]);
+    });
+
+    const response = await axios.post(`${API_URL}/profiles`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log('Profile created successfully, response:', {
+      id: response.data.id,
+      name: response.data.name,
+      image_url: response.data.image_url,
+      image_id: response.data.image_id
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error in createProfile:', error);
+    if (error.response && error.response.data) {
+      console.error('Server error details:', error.response.data);
+    }
+    throw error;
+  }
 };
 
 export const updateProfile = async (id, profileData) => {
-  const formData = new FormData();
-  Object.keys(profileData).forEach(key => {
-    formData.append(key, profileData[key]);
-  });
+  try {
+    console.log(`Updating profile ID: ${id} with data:`, {
+      name: profileData.name,
+      designation: profileData.designation,
+      user_id: profileData.user_id,
+      email: profileData.email,
+      hasImage: !!profileData.image
+    });
 
-  const response = await axios.put(`${API_URL}/profiles/${id}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+    const formData = new FormData();
+    Object.keys(profileData).forEach(key => {
+      if (key === 'image' && profileData[key]) {
+        console.log('Adding image to form data for update:', {
+          name: profileData[key].name,
+          type: profileData[key].type,
+          size: profileData[key].size
+        });
+      }
+      formData.append(key, profileData[key]);
+    });
+
+    const response = await axios.put(`${API_URL}/profiles/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log('Profile updated successfully, response:', {
+      id: response.data.id,
+      name: response.data.name,
+      image_url: response.data.image_url,
+      image_id: response.data.image_id
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating profile ID ${id}:`, error);
+    if (error.response && error.response.data) {
+      console.error('Server error details:', error.response.data);
+    }
+    throw error;
+  }
 };
 
 // Helper function to get profile image URL
 export const getProfileImageUrl = (id, directUrl = null) => {
   // If a direct URL is provided (from Google Drive), use it
   if (directUrl) {
+    console.log(`Using direct URL for profile image ID ${id}:`, directUrl);
     return directUrl;
   }
-  // Otherwise, use the API endpoint
-  return `${API_URL}/profiles/${id}/image`;
+
+  // Add cache-busting parameter to prevent browser caching issues
+  const timestamp = new Date().getTime();
+  const imageUrl = `${API_URL}/profiles/${id}/image?t=${timestamp}`;
+
+  console.log(`Using API endpoint for profile image ID ${id}:`, imageUrl);
+  return imageUrl;
 };
 
 // Confession related API calls
