@@ -16,20 +16,12 @@ const upload = multer({
 // Get all memory images
 router.get('/', async (req, res) => {
   try {
-    // Check if the request is from an admin (based on query parameter)
-    const isAdmin = req.query.admin === 'true';
-
-    let query = `
+    // Return all images regardless of approval status
+    const query = `
       SELECT id, name, image_id, image_url, uploaded_by, approved, approved_by, approved_at, created_at
       FROM memories
+      ORDER BY created_at DESC
     `;
-
-    // If not admin, only return approved images
-    if (!isAdmin) {
-      query += ' WHERE approved = 1 ';
-    }
-
-    query += ' ORDER BY created_at DESC';
 
     const rows = db.all(query);
     res.json(rows || []);
@@ -121,29 +113,13 @@ router.post('/', upload.single('image'), async (req, res) => {
       return res.status(500).json({ error: 'Error uploading image to Google Drive' });
     }
 
-    // Save memory metadata to database
+    // Save memory metadata to database with auto-approval
     const result = db.run(
-      'INSERT INTO memories (name, image_id, image_url, uploaded_by, approved) VALUES (?, ?, ?, ?, ?)',
-      [name, imageId, imageUrl, uploadedBy, 0] // Set approved to 0 (false) by default
+      'INSERT INTO memories (name, image_id, image_url, uploaded_by, approved, approved_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, imageId, imageUrl, uploadedBy, 1, new Date().toISOString()] // Set approved to 1 (true) by default
     );
 
     const memoryId = result.lastInsertRowid;
-
-    // Send notification to admins about the new memory image
-    try {
-      await sendAdminNotification({
-        type: 'memory_upload',
-        memoryId,
-        name,
-        uploadedBy,
-        imageUrl,
-        timestamp: new Date().toISOString()
-      });
-      console.log(`Admin notification sent for memory upload (ID: ${memoryId})`);
-    } catch (notificationError) {
-      console.error('Error sending admin notification:', notificationError);
-      // Continue even if notification fails
-    }
 
     res.status(201).json({
       id: memoryId,
@@ -151,7 +127,8 @@ router.post('/', upload.single('image'), async (req, res) => {
       image_id: imageId,
       image_url: imageUrl,
       uploaded_by: uploadedBy,
-      approved: false,
+      approved: true,
+      approved_at: new Date().toISOString(),
       created_at: new Date().toISOString()
     });
   } catch (err) {
@@ -191,29 +168,13 @@ router.post('/batch', upload.array('image', 10), async (req, res) => {
         continue;
       }
 
-      // Save memory metadata to database
+      // Save memory metadata to database with auto-approval
       const result = db.run(
-        'INSERT INTO memories (name, image_id, image_url, uploaded_by, approved) VALUES (?, ?, ?, ?, ?)',
-        [name, imageId, imageUrl, uploadedBy, 0] // Set approved to 0 (false) by default
+        'INSERT INTO memories (name, image_id, image_url, uploaded_by, approved, approved_at) VALUES (?, ?, ?, ?, ?, ?)',
+        [name, imageId, imageUrl, uploadedBy, 1, new Date().toISOString()] // Set approved to 1 (true) by default
       );
 
       const memoryId = result.lastInsertRowid;
-
-      // Send notification to admins about the new memory image
-      try {
-        await sendAdminNotification({
-          type: 'memory_upload',
-          memoryId,
-          name,
-          uploadedBy,
-          imageUrl,
-          timestamp: new Date().toISOString()
-        });
-        console.log(`Admin notification sent for memory upload (ID: ${memoryId})`);
-      } catch (notificationError) {
-        console.error('Error sending admin notification:', notificationError);
-        // Continue even if notification fails
-      }
 
       uploadedImages.push({
         id: memoryId,
@@ -221,7 +182,8 @@ router.post('/batch', upload.array('image', 10), async (req, res) => {
         image_id: imageId,
         image_url: imageUrl,
         uploaded_by: uploadedBy,
-        approved: false,
+        approved: true,
+        approved_at: new Date().toISOString(),
         created_at: new Date().toISOString()
       });
     }
