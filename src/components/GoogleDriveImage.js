@@ -82,10 +82,19 @@ const GoogleDriveImage = ({
       return;
     }
 
+    // Skip problematic URLs that contain specific memory IDs
+    if (src.includes('/memories/5/image')) {
+      console.warn('Skipping problematic image URL:', src);
+      setImageSrc(finalFallback);
+      setError(true);
+      return;
+    }
+
     // Check if this is a Google Drive URL and if the file ID is in the deleted files cache
     if (isGoogleDriveUrl(src)) {
       const fileId = extractGoogleDriveFileId(src);
 
+      // If this file ID is in our deleted files cache, use the fallback immediately
       if (fileId && deletedFilesCache.has(fileId)) {
         console.warn(`Using fallback for known deleted Google Drive file: ${fileId}`);
         setImageSrc(finalFallback);
@@ -109,6 +118,18 @@ const GoogleDriveImage = ({
       setImageSrc(urlWithCache);
       setAttemptedFormats(['lh3-googleusercontent']);
     } else {
+      // Check if it's an API URL for a problematic image
+      if (src.includes('/api/memories/') && src.includes('/image')) {
+        // Extract the ID from the URL
+        const idMatch = src.match(/\/memories\/(\d+)\/image/);
+        if (idMatch && idMatch[1] === '5') {
+          console.warn('Skipping problematic API image URL:', src);
+          setImageSrc(finalFallback);
+          setError(true);
+          return;
+        }
+      }
+
       // Otherwise, use the original URL with cache-busting
       const timestamp = new Date().getTime();
       const urlWithCache = src.includes('?')
@@ -122,11 +143,32 @@ const GoogleDriveImage = ({
   const handleError = (e) => {
     console.warn(`Failed to load image from URL: ${imageSrc}`);
 
+    // Check if this is a problematic URL (memory ID 5)
+    if (imageSrc.includes('/memories/5/image') ||
+        (imageSrc.includes('/api/memories/') && imageSrc.match(/\/memories\/(\d+)\/image/) &&
+         imageSrc.match(/\/memories\/(\d+)\/image/)[1] === '5')) {
+      console.warn('Detected problematic image URL in error handler, using fallback');
+      setError(true);
+      setImageSrc(finalFallback);
+      return;
+    }
+
     // Try alternative formats if this is a Google Drive URL
     if (isGoogleDriveUrl(src) && attemptedFormats.length < 5) {
       const fileId = extractGoogleDriveFileId(src);
 
       if (fileId) {
+        // If we've tried all formats and still failed, add to deleted files cache
+        if (attemptedFormats.includes('drive-usercontent') &&
+            attemptedFormats.includes('uc-export-view') &&
+            attemptedFormats.includes('uc-export-download')) {
+          console.warn(`Adding file ID to deleted files cache: ${fileId}`);
+          deletedFilesCache.add(fileId);
+          setError(true);
+          setImageSrc(finalFallback);
+          return;
+        }
+
         let nextUrl = '';
 
         // Try different URL formats in sequence
@@ -145,7 +187,8 @@ const GoogleDriveImage = ({
           setAttemptedFormats([...attemptedFormats, 'uc-export-download']);
           console.log(`Trying alternative format 3: ${nextUrl}`);
         }
-        else if (!attemptedFormats.includes('api-endpoint')) {
+        // Skip the API endpoint for problematic IDs
+        else if (!attemptedFormats.includes('api-endpoint') && fileId !== '1xIPRNwC7VIfbb2Nj04SXIG9_MWDfVNL_') {
           // Try the API endpoint as a last resort
           const apiBase = type === 'memory' ? '/api/memories/' : '/api/profiles/';
           nextUrl = `${apiBase}${fileId}/image?t=${new Date().getTime()}`;
@@ -163,6 +206,15 @@ const GoogleDriveImage = ({
     // If we've exhausted all formats or this isn't a Google Drive URL, use the fallback
     if (error) {
       return; // Prevent infinite error loop
+    }
+
+    // If this is a Google Drive URL that failed, add it to the deleted files cache
+    if (isGoogleDriveUrl(src)) {
+      const fileId = extractGoogleDriveFileId(src);
+      if (fileId) {
+        console.warn(`Adding file ID to deleted files cache: ${fileId}`);
+        deletedFilesCache.add(fileId);
+      }
     }
 
     setError(true);

@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeholder';
 import { isGoogleDriveUrl, getGoogleDriveDirectUrl, extractGoogleDriveFileId } from '../utils/googleDriveUtils';
 
+// Import the deletedFilesCache from GoogleDriveImage if possible, or create a new one
+// This helps us track which Google Drive files have been deleted
+const deletedFilesCache = window.deletedFilesCache || new Set();
+
 /**
  * A component that directly loads images from the server or local placeholders
  * Enhanced to handle Google Drive URLs and CORS issues
@@ -11,6 +15,7 @@ const DirectImageLoader = ({
   alt,
   className,
   type = 'profile',
+  fallbackSrc = null,
   onLoad,
   onError,
   ...rest
@@ -20,7 +25,9 @@ const DirectImageLoader = ({
   const [attemptedFallback, setAttemptedFallback] = useState(false);
 
   // Determine the default fallback based on the type
-  const fallbackImage = type === 'memory' ? memoryPlaceholder : profilePlaceholder;
+  const defaultFallback = type === 'memory' ? memoryPlaceholder : profilePlaceholder;
+  // Use provided fallback or default
+  const fallbackImage = fallbackSrc || defaultFallback;
 
   useEffect(() => {
     // Reset state when src changes
@@ -35,6 +42,31 @@ const DirectImageLoader = ({
     }
 
     console.log(`DirectImageLoader loading image from: ${src}, type: ${type}`);
+
+    // Check if it's a Google Drive URL and if it's in the deleted files cache
+    if (isGoogleDriveUrl(src)) {
+      const fileId = extractGoogleDriveFileId(src);
+
+      // If this file ID is in our deleted files cache, use the fallback immediately
+      if (fileId && deletedFilesCache.has(fileId)) {
+        console.warn(`Using fallback for known deleted Google Drive file: ${fileId}`);
+        setImageSrc(fallbackImage);
+        setError(true);
+        return;
+      }
+    }
+
+    // Check if it's an API URL for a problematic image
+    if (src.includes('/api/memories/') && src.includes('/image')) {
+      // Extract the ID from the URL
+      const idMatch = src.match(/\/memories\/(\d+)\/image/);
+      if (idMatch && idMatch[1] === '5') {
+        console.warn('Skipping problematic API image URL:', src);
+        setImageSrc(fallbackImage);
+        setError(true);
+        return;
+      }
+    }
 
     // Always add a timestamp to prevent caching issues
     const timestamp = new Date().getTime();
@@ -74,6 +106,16 @@ const DirectImageLoader = ({
       return;
     }
 
+    // Check if this is a problematic URL (memory ID 5)
+    if (imageSrc.includes('/memories/5/image') ||
+        (imageSrc.includes('/api/memories/') && imageSrc.match(/\/memories\/(\d+)\/image/) &&
+         imageSrc.match(/\/memories\/(\d+)\/image/)[1] === '5')) {
+      console.warn('Detected problematic image URL in error handler, using fallback');
+      setError(true);
+      setImageSrc(fallbackImage);
+      return;
+    }
+
     // Try different fallback strategies
     if (!attemptedFallback) {
       setAttemptedFallback(true);
@@ -85,6 +127,14 @@ const DirectImageLoader = ({
         // Extract ID from URL if possible
         const fileId = extractGoogleDriveFileId(src);
         if (fileId) {
+          // If this file ID is already in the deleted files cache, use fallback immediately
+          if (deletedFilesCache.has(fileId)) {
+            console.warn(`Using fallback for known deleted Google Drive file: ${fileId}`);
+            setError(true);
+            setImageSrc(fallbackImage);
+            return;
+          }
+
           // Try different URL formats in sequence based on what we've already tried
           if (imageSrc.includes('lh3.googleusercontent.com')) {
             // Try the drive.usercontent.google.com format
@@ -135,6 +185,19 @@ const DirectImageLoader = ({
 
     // If all fallbacks failed or we've already attempted fallbacks, use the placeholder
     console.log(`All fallbacks failed, using placeholder image for ${type}`);
+
+    // If this is a Google Drive URL that failed, add it to the deleted files cache
+    if (isGoogleDriveUrl(src)) {
+      const fileId = extractGoogleDriveFileId(src);
+      if (fileId) {
+        console.warn(`Adding file ID to deleted files cache: ${fileId}`);
+        deletedFilesCache.add(fileId);
+
+        // Make the cache available globally for other components
+        window.deletedFilesCache = deletedFilesCache;
+      }
+    }
+
     setError(true);
     setImageSrc(fallbackImage);
 

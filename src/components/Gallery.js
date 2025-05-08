@@ -7,7 +7,9 @@ import {
   getProfileImageUrl,
   getMemoryImages,
   uploadMultipleMemoryImages,
-  getMemoryImageUrl
+  getMemoryImageUrl,
+  checkMemoryImagesStatus,
+  checkProfileImagesStatus
 } from '../services/api';
 import Navbardesk from './Navbar';
 import { Container, Form, Button, Spinner } from 'react-bootstrap';
@@ -17,7 +19,7 @@ import Toast from './Toast';
 import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeholder';
 import DirectImageLoader from './DirectImageLoader';
 import GoogleDriveImage from './GoogleDriveImage';
-import { isGoogleDriveUrl } from '../utils/googleDriveUtils';
+import { isGoogleDriveUrl, extractGoogleDriveFileId } from '../utils/googleDriveUtils';
 import MasonryGallery from './MasonryGallery';
 
 const Gallery = () => {
@@ -242,59 +244,140 @@ const Gallery = () => {
      currentUser.email === 'maprc@iitgn.ac.in' ||
      currentUser.email === 'jayraj.jayraj@iitgn.ac.in');
 
+  // Define fetchData outside useEffect to avoid reference issues
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // Fetch both profiles and memory images in parallel
+      const [profilesData, memoryImagesData] = await Promise.all([
+        getProfiles(),
+        getMemoryImages() // No need for admin parameter anymore
+      ]);
+
+      setProfiles(profilesData);
+
+      // Combine profile images and memory images into a single array for display
+      const profileImages = profilesData.map(profile => ({
+        id: profile.id,
+        name: profile.name,
+        type: 'profile',
+        status: profile.status,
+        // Add timestamp to prevent caching issues
+        imageUrl: getProfileImageUrl(profile.id, profile.image_url)
+      }));
+
+      // Filter out any memory images that might have been deleted from Google Drive
+      const validMemoryImages = memoryImagesData.filter(memory =>
+        memory && (memory.image_id || memory.image_url)
+      );
+
+      const memoryImgs = validMemoryImages.map(memory => ({
+        id: memory.id,
+        name: memory.name || 'Memory Image',
+        type: 'memory',
+        status: memory.status,
+        // Use the direct URL from Google Drive if available, otherwise use the API endpoint
+        // Add timestamp to prevent caching issues
+        imageUrl: memory.image_url || memory.imageUrl || getMemoryImageUrl(memory.id)
+      }));
+
+      console.log(`Loaded ${profileImages.length} profile images and ${memoryImgs.length} memory images`);
+
+      // Filter out problematic images (like ID 5) and combine the rest
+      const filteredImages = [...profileImages, ...memoryImgs].filter(img => {
+        // Filter out images marked as deleted in the database
+        if (img.status === 'deleted') {
+          console.log(`Filtering out image with deleted status: ${img.id}`);
+          return false;
+        }
+
+        // Filter out images with ID 5 which is causing the error
+        if (img.id === 5) {
+          console.log('Filtering out problematic image with ID 5');
+          return false;
+        }
+
+        // Filter out images with invalid URLs
+        if (!img.imageUrl && !img.tempImage && !img.id) {
+          console.log('Filtering out image with missing URL:', img);
+          return false;
+        }
+
+        // Filter out images with known deleted Google Drive IDs
+        if (img.imageUrl && isGoogleDriveUrl(img.imageUrl)) {
+          const fileId = extractGoogleDriveFileId(img.imageUrl);
+          // Check if this file ID is in the deleted files cache (if it exists)
+          if (fileId && window.deletedFilesCache && window.deletedFilesCache.has(fileId)) {
+            console.log(`Filtering out image with known deleted Google Drive ID: ${fileId}`);
+            return false;
+          }
+
+          // Also filter out the specific problematic ID from the error
+          if (fileId === '1aeu2JLfeGX_8yvC-1YjtZKuRZ8dAz8qO') {
+            console.log('Filtering out image with known problematic Google Drive ID');
+            // Add to deleted files cache if it exists
+            if (window.deletedFilesCache) {
+              window.deletedFilesCache.add(fileId);
+            }
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      // Combine and shuffle all images
+      setAllImages(filteredImages.sort(() => 0.5 - Math.random()));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Show error message
+      setToastMessage('Error loading images. Please refresh the page to try again.');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Effect to check for deleted images on the backend
+  useEffect(() => {
+    const checkDeletedImages = async () => {
+      try {
+        // Check memory images status
+        const memoryResult = await checkMemoryImagesStatus();
+        console.log('Memory images status check result:', memoryResult);
+
+        // Check profile images status
+        const profileResult = await checkProfileImagesStatus();
+        console.log('Profile images status check result:', profileResult);
+
+        // If any images were updated, we'll reload the data
+        if ((memoryResult && memoryResult.updated > 0) ||
+            (profileResult && profileResult.updated > 0)) {
+          console.log('Some images were marked as deleted, reloading data');
+          // Reload data
+          fetchData();
+        }
+      } catch (error) {
+        console.error('Error checking deleted images:', error);
+        // Continue with loading data even if this check fails
+      }
+    };
+
+    // Run the check when the component mounts
+    checkDeletedImages();
+
+    // Schedule periodic checks (every 5 minutes)
+    const checkInterval = setInterval(checkDeletedImages, 5 * 60 * 1000);
+
+    // Clean up the interval when the component unmounts
+    return () => clearInterval(checkInterval);
+  }, []);
+
   // Effect to handle screen size changes and fetch data
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth <= 768);
-    };
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Fetch both profiles and memory images in parallel
-        const [profilesData, memoryImagesData] = await Promise.all([
-          getProfiles(),
-          getMemoryImages() // No need for admin parameter anymore
-        ]);
-
-        setProfiles(profilesData);
-
-        // Combine profile images and memory images into a single array for display
-        const profileImages = profilesData.map(profile => ({
-          id: profile.id,
-          name: profile.name,
-          type: 'profile',
-          // Add timestamp to prevent caching issues
-          imageUrl: getProfileImageUrl(profile.id, profile.image_url)
-        }));
-
-        // Filter out any memory images that might have been deleted from Google Drive
-        const validMemoryImages = memoryImagesData.filter(memory =>
-          memory && (memory.image_id || memory.image_url)
-        );
-
-        const memoryImgs = validMemoryImages.map(memory => ({
-          id: memory.id,
-          name: memory.name || 'Memory Image',
-          type: 'memory',
-          // Use the direct URL from Google Drive if available, otherwise use the API endpoint
-          // Add timestamp to prevent caching issues
-          imageUrl: memory.image_url || memory.imageUrl || getMemoryImageUrl(memory.id)
-        }));
-
-        console.log(`Loaded ${profileImages.length} profile images and ${memoryImgs.length} memory images`);
-
-        // Combine and shuffle all images
-        setAllImages([...profileImages, ...memoryImgs].sort(() => 0.5 - Math.random()));
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        // Show error message
-        setToastMessage('Error loading images. Please refresh the page to try again.');
-        setToastType('error');
-        setShowToast(true);
-      } finally {
-        setLoading(false);
-      }
     };
 
     checkScreenSize();
@@ -435,6 +518,7 @@ const Gallery = () => {
             alt={image.name || 'Memory image'}
             className="memory-image"
             type="memory"
+            imageId={image.id} // Add imageId for reporting deleted images
             fallbackSrc={image.id ? getMemoryImageUrl(image.id) : memoryPlaceholder}
           />
         ) : (
@@ -644,6 +728,7 @@ const Gallery = () => {
                           alt={profile.name}
                           className="gallery-image"
                           type="profile"
+                          imageId={profile.id} // Add imageId for reporting deleted images
                           fallbackSrc={getProfileImageUrl(profile.id)}
                         />
                       ) : (
