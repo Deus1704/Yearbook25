@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import './Profile.css';
 import Navbardesk from './Navbar';
 import { getProfile, getProfileImageUrl } from '../services/api';
+import { profilePlaceholder } from '../assets/profile-placeholder';
+import DirectImageLoader from './DirectImageLoader';
 
 const Profile = () => {
   const { id } = useParams();
@@ -66,14 +68,11 @@ const Profile = () => {
         <i className="fas fa-arrow-left"></i>
       </Link>
       <div className="profile-card1">
-        <img
-          src={getProfileImageUrl(profile.id, profile.image_url)}
+        <DirectImageLoader
+          src={profile.image_url || getProfileImageUrl(profile.id)}
           alt={profile.name}
           className="profile-image1"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = 'https://via.placeholder.com/300?text=No+Image';
-          }}
+          type="profile"
         />
         <div className="profile-details1">
           <h1>{profile.name}</h1>

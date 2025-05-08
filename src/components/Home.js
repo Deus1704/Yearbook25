@@ -7,6 +7,8 @@ import logo from '../assets/Logo.svg';
 import Navbardesk from './Navbar';
 import { useAuth } from '../context/AuthContext';
 import { getProfiles, getProfileImageUrl } from '../services/api';
+import { profilePlaceholder } from '../assets/profile-placeholder';
+import DirectImageLoader from './DirectImageLoader';
 
 const Home = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -129,14 +131,11 @@ const Home = () => {
                   >
                     <div className="profile-gallery-card">
                       <div className="profile-gallery-img-container">
-                        <img
-                          src={getProfileImageUrl(profile.id)}
+                        <DirectImageLoader
+                          src={profile.image_url || getProfileImageUrl(profile.id)}
                           className="profile-gallery-img"
                           alt={profile.name}
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/150?text=Profile';
-                          }}
+                          type="profile"
                         />
                       </div>
                       <div className="profile-gallery-info">

@@ -14,6 +14,8 @@ import { Container, Form, Button, Spinner } from 'react-bootstrap';
 import { FaPlus, FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import Toast from './Toast';
+import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeholder';
+import DirectImageLoader from './DirectImageLoader';
 
 const Gallery = () => {
   const { currentUser } = useAuth();
@@ -336,30 +338,54 @@ const Gallery = () => {
     const sizeClass = preserveSize ? 'preserve-size' : getRandomSize();
     const rotationClass = getRandomRotation();
 
-    // Determine the image source based on the image object structure
-    // Handle temporary images from uploads that haven't been saved to DB yet
-    // Add a cache-busting parameter to prevent browser caching issues
-    const timestamp = new Date().getTime();
-    let imageSrc = image.tempImage || image.imageUrl || 'https://via.placeholder.com/200x200?text=No+Image';
+    // Skip rendering if we don't have a valid image
+    if (!image || (!image.tempImage && !image.imageUrl && !image.id)) {
+      console.log('Invalid memory image data:', image);
+      return (
+        <div
+          className={`memory-item ${sizeClass} ${rotationClass}`}
+          key={`placeholder-${index}`}
+        >
+          <DirectImageLoader
+            src={memoryPlaceholder}
+            alt="Memory placeholder"
+            className="memory-image"
+            type="memory"
+          />
+        </div>
+      );
+    }
 
-    // Add cache-busting parameter if it's not a Google Drive URL (which contains 'drive.google.com')
-    if (imageSrc && !imageSrc.includes('drive.google.com') && !imageSrc.includes('placeholder')) {
-      imageSrc = `${imageSrc}${imageSrc.includes('?') ? '&' : '?'}t=${timestamp}`;
+    // Determine the image source based on the image object structure
+    let imageSrc;
+
+    // If we have a temporary image (from a recent upload), use that
+    if (image.tempImage) {
+      imageSrc = image.tempImage;
+    }
+    // Otherwise, if we have a direct URL, use that
+    else if (image.imageUrl) {
+      imageSrc = image.imageUrl;
+    }
+    // Otherwise, use the API endpoint
+    else if (image.id) {
+      imageSrc = getMemoryImageUrl(image.id);
+    }
+    // If all else fails, use the placeholder
+    else {
+      imageSrc = memoryPlaceholder;
     }
 
     return (
       <div
         className={`memory-item ${sizeClass} ${rotationClass}`}
-        key={`${image.id}-${index}`}
+        key={`${image.id || 'temp'}-${index}`}
       >
-        <img
+        <DirectImageLoader
           src={imageSrc}
-          alt={image.name}
+          alt={image.name || 'Memory image'}
           className="memory-image"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = 'https://via.placeholder.com/200x200?text=No+Image';
-          }}
+          type="memory"
         />
       </div>
     );

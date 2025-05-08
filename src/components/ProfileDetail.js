@@ -3,6 +3,8 @@ import './ProfileDetail.css';
 import { useParams } from 'react-router-dom';
 import { getProfile, addComment, getProfileImageUrl } from '../services/api';
 import { Spinner, Alert, Button } from 'react-bootstrap';
+import { profilePlaceholder } from '../assets/profile-placeholder';
+import DirectImageLoader from './DirectImageLoader';
 
 const ProfileDetail = () => {
   const { id } = useParams();
@@ -69,14 +71,11 @@ const ProfileDetail = () => {
         {/* Left column - Profile details */}
         <div className="profile-details-column">
           <div className="profile-header">
-            <img
-              src={getProfileImageUrl(profile.id)}
+            <DirectImageLoader
+              src={profile.image_url || getProfileImageUrl(profile.id)}
               alt={profile.name}
               className="profile-detail-img"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://via.placeholder.com/300?text=No+Image';
-              }}
+              type="profile"
             />
             <div className="profile-info">
               <h2 className="profile-name">{profile.name}</h2>
