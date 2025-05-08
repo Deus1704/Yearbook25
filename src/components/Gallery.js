@@ -159,29 +159,36 @@ const Gallery = () => {
     setUploading(true);
     setUploadError(null);
 
-    try {
-      // Create a FormData object
-      const formData = new FormData();
+    // Show initial progress message
+    setToastMessage(`Starting upload of ${selectedFiles.length} image${selectedFiles.length !== 1 ? 's' : ''}...`);
+    setToastType('info');
+    setShowToast(true);
 
+    try {
       // Add the user's email to identify who uploaded the images
       const uploadedBy = currentUser?.email || 'anonymous';
-      formData.append('uploadedBy', uploadedBy);
 
-      // Add each file to the FormData
-      selectedFiles.forEach((file, index) => {
-        formData.append('image', file);
-        formData.append(`name-${index}`, `Memory ${index + 1}`);
-      });
+      // For larger batches, show a progress message
+      if (selectedFiles.length > 3) {
+        setToastMessage(`Uploading ${selectedFiles.length} images one by one. This may take a while...`);
+        setToastType('info');
+        setShowToast(true);
+      }
 
       // Upload the images to the server
       const uploadedImages = await uploadMultipleMemoryImages(selectedFiles, uploadedBy);
+
+      // Check if we got any successful uploads
+      if (!uploadedImages || uploadedImages.length === 0) {
+        throw new Error('No images were uploaded successfully');
+      }
 
       // Create temporary objects for immediate display
       const newImages = uploadedImages.map((image, index) => ({
         id: image.id,
         name: image.name || `Memory ${index + 1}`,
         type: 'memory',
-        imageUrl: getMemoryImageUrl(image.id),
+        imageUrl: image.image_url || getMemoryImageUrl(image.id),
         approved: true // Images are now automatically approved
       }));
 
@@ -199,10 +206,22 @@ const Gallery = () => {
       setShowToast(true);
     } catch (error) {
       console.error('Error uploading images:', error);
-      setUploadError('There was an issue uploading your images. Please check your connection and try again.');
+
+      // Provide more specific error messages based on the error type
+      let errorMessage = 'There was an issue uploading your images. Please check your connection and try again.';
+
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'The upload timed out. Please try uploading fewer images at once or check your connection.';
+      } else if (error.response && error.response.status === 413) {
+        errorMessage = 'The images are too large. Please reduce their size or upload fewer images at once.';
+      } else if (error.message && error.message.includes('Network Error')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      }
+
+      setUploadError(errorMessage);
 
       // Show error message using toast
-      setToastMessage('There was an issue uploading your images. Please check your connection and try again.');
+      setToastMessage(errorMessage);
       setToastType('error');
       setShowToast(true);
     } finally {

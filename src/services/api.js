@@ -9,7 +9,7 @@ const API_URL = 'https://yearbook25-xb9a.onrender.com/api';
 console.log('API URL:', API_URL);
 
 // Add a default timeout and error handling to axios
-axios.defaults.timeout = 15000; // 15 seconds to account for slower connections
+axios.defaults.timeout = 30000; // 30 seconds to account for slower connections and larger files
 
 // Add request interceptor for common headers
 axios.interceptors.request.use(
@@ -282,15 +282,50 @@ export const uploadMemoryImage = async (imageFile, uploadedBy = null) => {
     formData.append('uploadedBy', uploadedBy);
   }
 
+  // Use a longer timeout for image uploads
   const response = await axios.post(`${API_URL}/memories`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 30000, // 30 seconds timeout for single image upload
   });
+
+  // Log the response for debugging
+  console.log('Memory image upload response:', {
+    id: response.data.id,
+    name: response.data.name,
+    image_url: response.data.image_url,
+    image_id: response.data.image_id
+  });
+
   return response.data;
 };
 
 export const uploadMultipleMemoryImages = async (imageFiles, uploadedBy = null) => {
+  // For large batches, upload images individually to avoid timeout issues
+  if (imageFiles.length > 3) {
+    console.log(`Uploading ${imageFiles.length} images individually to avoid timeout`);
+    const uploadedImages = [];
+
+    for (let i = 0; i < imageFiles.length; i++) {
+      try {
+        console.log(`Uploading image ${i + 1} of ${imageFiles.length}`);
+        const file = imageFiles[i];
+        const name = `Memory ${i + 1}`;
+
+        // Upload each image individually
+        const result = await uploadMemoryImage(file, uploadedBy);
+        uploadedImages.push(result);
+      } catch (error) {
+        console.error(`Error uploading image ${i + 1}:`, error);
+        // Continue with the next image even if one fails
+      }
+    }
+
+    return uploadedImages;
+  }
+
+  // For smaller batches, use the batch endpoint
   const formData = new FormData();
 
   // Add the uploadedBy field if provided
@@ -305,10 +340,12 @@ export const uploadMultipleMemoryImages = async (imageFiles, uploadedBy = null) 
     formData.append(`name-${index}`, `Memory ${index + 1}`);
   });
 
+  // Use a longer timeout for batch uploads
   const response = await axios.post(`${API_URL}/memories/batch`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+    timeout: 60000, // 60 seconds timeout for batch uploads
   });
   return response.data;
 };
