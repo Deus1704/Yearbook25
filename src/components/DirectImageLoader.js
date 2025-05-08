@@ -36,22 +36,33 @@ const DirectImageLoader = ({
 
     console.log(`DirectImageLoader loading image from: ${src}, type: ${type}`);
 
+    // Always add a timestamp to prevent caching issues
+    const timestamp = new Date().getTime();
+
     // Check if it's a Google Drive URL and convert it if needed
     if (isGoogleDriveUrl(src)) {
       const directUrl = getGoogleDriveDirectUrl(src);
       console.log(`Converting Google Drive URL: ${src} to direct URL: ${directUrl}`);
-      setImageSrc(directUrl);
+
+      // Add cache-busting parameter
+      const urlWithCache = directUrl.includes('?')
+        ? `${directUrl}&t=${timestamp}`
+        : `${directUrl}?t=${timestamp}`;
+
+      setImageSrc(urlWithCache);
     } else if (src.includes('/api/profiles/') || src.includes('/api/memories/')) {
       // Add cache-busting parameter to API URLs
-      const timestamp = new Date().getTime();
       const urlWithCache = src.includes('?')
         ? `${src}&t=${timestamp}`
         : `${src}?t=${timestamp}`;
       console.log(`Adding cache-busting to API URL: ${urlWithCache}`);
       setImageSrc(urlWithCache);
     } else {
-      // Use the provided source
-      setImageSrc(src);
+      // Use the provided source with cache-busting
+      const urlWithCache = src.includes('?')
+        ? `${src}&t=${timestamp}`
+        : `${src}?t=${timestamp}`;
+      setImageSrc(urlWithCache);
     }
   }, [src, fallbackImage, type]);
 
@@ -77,27 +88,30 @@ const DirectImageLoader = ({
           // Try different URL formats in sequence based on what we've already tried
           if (imageSrc.includes('lh3.googleusercontent.com')) {
             // Try the drive.usercontent.google.com format
-            const alternateUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=view`;
+            const timestamp = new Date().getTime();
+            const alternateUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=view&t=${timestamp}`;
             console.log(`Trying alternative Google Drive format: ${alternateUrl}`);
             setImageSrc(alternateUrl);
             return;
           }
           else if (imageSrc.includes('drive.usercontent.google.com')) {
             // Try the uc?export=view format
-            const alternateUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+            const timestamp = new Date().getTime();
+            const alternateUrl = `https://drive.google.com/uc?export=view&id=${fileId}&t=${timestamp}`;
             console.log(`Trying alternative Google Drive format: ${alternateUrl}`);
             setImageSrc(alternateUrl);
             return;
           }
           else if (imageSrc.includes('uc?export=view')) {
             // Try the export=download format
-            const alternateUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+            const timestamp = new Date().getTime();
+            const alternateUrl = `https://drive.google.com/uc?id=${fileId}&export=download&t=${timestamp}`;
             console.log(`Trying alternative Google Drive format: ${alternateUrl}`);
             setImageSrc(alternateUrl);
             return;
           }
           else {
-            // If all Google Drive formats failed, try the API endpoint
+            // If all Google Drive formats failed, try the API endpoint with a fresh timestamp
             const apiBase = type === 'memory' ? '/api/memories/' : '/api/profiles/';
             const timestamp = new Date().getTime();
             const fallbackUrl = `${apiBase}${fileId}/image?t=${timestamp}`;

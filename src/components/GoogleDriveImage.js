@@ -54,11 +54,23 @@ const GoogleDriveImage = ({
     if (isGoogleDriveUrl(src)) {
       const directUrl = getGoogleDriveDirectUrl(src);
       console.log(`Converting Google Drive URL: ${src} to direct URL: ${directUrl}`);
-      setImageSrc(directUrl);
+
+      // Add cache-busting parameter to prevent stale images
+      const timestamp = new Date().getTime();
+      const urlWithCache = directUrl.includes('?')
+        ? `${directUrl}&t=${timestamp}`
+        : `${directUrl}?t=${timestamp}`;
+
+      setImageSrc(urlWithCache);
       setAttemptedFormats(['lh3-googleusercontent']);
     } else {
-      // Otherwise, use the original URL
-      setImageSrc(src);
+      // Otherwise, use the original URL with cache-busting
+      const timestamp = new Date().getTime();
+      const urlWithCache = src.includes('?')
+        ? `${src}&t=${timestamp}`
+        : `${src}?t=${timestamp}`;
+
+      setImageSrc(urlWithCache);
     }
   }, [src, finalFallback]);
 

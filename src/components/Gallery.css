@@ -77,6 +77,8 @@ body {
   width: 100%;
   position: relative;
   min-height: 80vh;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .loading-container, .empty-state {
@@ -237,6 +239,11 @@ body {
 
 .memory-wall {
   animation: fadeIn 1s ease-in-out;
+}
+
+/* Hide the original memory wall and grid by default */
+.memory-wall-container {
+  display: none; /* Hide the memory wall by default */
 }
 
 /* Legacy grid styles kept for fallback */

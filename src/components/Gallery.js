@@ -18,6 +18,7 @@ import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeho
 import DirectImageLoader from './DirectImageLoader';
 import GoogleDriveImage from './GoogleDriveImage';
 import { isGoogleDriveUrl } from '../utils/googleDriveUtils';
+import MasonryGallery from './MasonryGallery';
 
 const Gallery = () => {
   const { currentUser } = useAuth();
@@ -263,21 +264,34 @@ const Gallery = () => {
           id: profile.id,
           name: profile.name,
           type: 'profile',
-          imageUrl: getProfileImageUrl(profile.id)
+          // Add timestamp to prevent caching issues
+          imageUrl: getProfileImageUrl(profile.id, profile.image_url)
         }));
 
-        const memoryImgs = memoryImagesData.map(memory => ({
+        // Filter out any memory images that might have been deleted from Google Drive
+        const validMemoryImages = memoryImagesData.filter(memory =>
+          memory && (memory.image_id || memory.image_url)
+        );
+
+        const memoryImgs = validMemoryImages.map(memory => ({
           id: memory.id,
           name: memory.name || 'Memory Image',
           type: 'memory',
           // Use the direct URL from Google Drive if available, otherwise use the API endpoint
+          // Add timestamp to prevent caching issues
           imageUrl: memory.image_url || memory.imageUrl || getMemoryImageUrl(memory.id)
         }));
+
+        console.log(`Loaded ${profileImages.length} profile images and ${memoryImgs.length} memory images`);
 
         // Combine and shuffle all images
         setAllImages([...profileImages, ...memoryImgs].sort(() => 0.5 - Math.random()));
       } catch (error) {
         console.error('Error fetching data:', error);
+        // Show error message
+        setToastMessage('Error loading images. Please refresh the page to try again.');
+        setToastType('error');
+        setShowToast(true);
       } finally {
         setLoading(false);
       }
@@ -285,10 +299,15 @@ const Gallery = () => {
 
     checkScreenSize();
     fetchData();
+
+    // Set up an interval to refresh the data every 5 minutes
+    const refreshInterval = setInterval(fetchData, 5 * 60 * 1000);
+
     window.addEventListener('resize', checkScreenSize);
 
     return () => {
       window.removeEventListener('resize', checkScreenSize);
+      clearInterval(refreshInterval);
     };
   }, []);
 
@@ -607,11 +626,16 @@ const Gallery = () => {
               </div>
             ) : (
               <>
-                {/* Floating memory wall */}
-                {renderMemoryWall()}
+                {/* Masonry Gallery */}
+                <MasonryGallery images={allImages} />
+
+                {/* Original memory wall (hidden with CSS) */}
+                <div className="memory-wall-container" style={{ display: 'none' }}>
+                  {renderMemoryWall()}
+                </div>
 
                 {/* Original grid (hidden with CSS) */}
-                <div className="gallery-grid">
+                <div className="gallery-grid" style={{ display: 'none' }}>
                   {profiles.map((profile) => (
                     <div className="gallery-item" key={profile.id}>
                       {profile.image_url && isGoogleDriveUrl(profile.image_url) ? (
