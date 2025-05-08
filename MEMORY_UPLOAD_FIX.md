@@ -29,6 +29,7 @@ We implemented a comprehensive solution to address these issues:
    - Added progress messages during the upload process
    - More specific error messages based on the type of error
    - Toast notifications to keep the user informed
+   - Automatic page reload after successful upload to refresh the gallery
 
 4. **Better Error Handling**:
    - Specific error messages for different types of failures (timeout, network error, etc.)
@@ -63,7 +64,7 @@ export const uploadMemoryImage = async (imageFile, uploadedBy = null) => {
     },
     timeout: 30000, // 30 seconds timeout for single image upload
   });
-  
+
   // Log the response for debugging
   console.log('Memory image upload response:', {
     id: response.data.id,
@@ -71,7 +72,7 @@ export const uploadMemoryImage = async (imageFile, uploadedBy = null) => {
     image_url: response.data.image_url,
     image_id: response.data.image_id
   });
-  
+
   return response.data;
 };
 ```
@@ -84,13 +85,13 @@ export const uploadMultipleMemoryImages = async (imageFiles, uploadedBy = null) 
   if (imageFiles.length > 3) {
     console.log(`Uploading ${imageFiles.length} images individually to avoid timeout`);
     const uploadedImages = [];
-    
+
     for (let i = 0; i < imageFiles.length; i++) {
       try {
         console.log(`Uploading image ${i + 1} of ${imageFiles.length}`);
         const file = imageFiles[i];
         const name = `Memory ${i + 1}`;
-        
+
         // Upload each image individually
         const result = await uploadMemoryImage(file, uploadedBy);
         uploadedImages.push(result);
@@ -99,10 +100,10 @@ export const uploadMultipleMemoryImages = async (imageFiles, uploadedBy = null) 
         // Continue with the next image even if one fails
       }
     }
-    
+
     return uploadedImages;
   }
-  
+
   // For smaller batches, use the batch endpoint
   // ... (rest of the code)
 };
@@ -131,10 +132,20 @@ const handleUpload = async (e) => {
     }
 
     // ... (rest of the upload logic)
+
+    // Show success message and reload the page
+    setToastMessage(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your image${uploadedImages.length !== 1 ? 's are' : ' is'} now visible in Memory Lane. The page will reload shortly.`);
+    setToastType('success');
+    setShowToast(true);
+
+    // Set a timeout to reload the page after showing the success message
+    setTimeout(() => {
+      window.location.reload();
+    }, 3000); // Reload after 3 seconds
   } catch (error) {
     // Provide more specific error messages based on the error type
     let errorMessage = 'There was an issue uploading your images. Please check your connection and try again.';
-    
+
     if (error.code === 'ECONNABORTED') {
       errorMessage = 'The upload timed out. Please try uploading fewer images at once or check your connection.';
     } else if (error.response && error.response.status === 413) {
@@ -142,7 +153,7 @@ const handleUpload = async (e) => {
     } else if (error.message && error.message.includes('Network Error')) {
       errorMessage = 'Network error. Please check your internet connection and try again.';
     }
-    
+
     // ... (show error message)
   }
 };

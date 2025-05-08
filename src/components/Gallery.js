@@ -201,9 +201,14 @@ const Gallery = () => {
       setPreviewUrls([]);
 
       // Show success message
-      setToastMessage(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your image${uploadedImages.length !== 1 ? 's are' : ' is'} now visible in Memory Lane.`);
+      setToastMessage(`Successfully uploaded ${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''}! Your image${uploadedImages.length !== 1 ? 's are' : ' is'} now visible in Memory Lane. The page will reload shortly.`);
       setToastType('success');
       setShowToast(true);
+
+      // Set a timeout to reload the page after showing the success message
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000); // Reload after 3 seconds to give the user time to see the success message
     } catch (error) {
       console.error('Error uploading images:', error);
 
