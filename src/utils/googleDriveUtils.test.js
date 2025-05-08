@@ -1,7 +1,7 @@
-import { 
-  extractGoogleDriveFileId, 
-  getGoogleDriveDirectUrl, 
-  isGoogleDriveUrl 
+import {
+  extractGoogleDriveFileId,
+  getGoogleDriveDirectUrl,
+  isGoogleDriveUrl
 } from './googleDriveUtils';
 
 describe('Google Drive Utilities', () => {
@@ -49,10 +49,19 @@ describe('Google Drive Utilities', () => {
   });
 
   describe('getGoogleDriveDirectUrl', () => {
-    test('should convert Google Drive URL to direct URL', () => {
-      const url = 'https://drive.google.com/file/d/1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l/view';
-      const expected = 'https://drive.google.com/uc?export=view&id=1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l';
-      expect(getGoogleDriveDirectUrl(url)).toBe(expected);
+    test('should convert /file/d/ format to direct URL', () => {
+      const url = 'https://drive.google.com/file/d/1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l/view?usp=sharing';
+      expect(getGoogleDriveDirectUrl(url)).toBe('https://lh3.googleusercontent.com/d/1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l');
+    });
+
+    test('should convert open?id= format to direct URL', () => {
+      const url = 'https://drive.google.com/open?id=1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l';
+      expect(getGoogleDriveDirectUrl(url)).toBe('https://lh3.googleusercontent.com/d/1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l');
+    });
+
+    test('should convert uc?id= format to direct URL', () => {
+      const url = 'https://drive.google.com/uc?id=1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l';
+      expect(getGoogleDriveDirectUrl(url)).toBe('https://lh3.googleusercontent.com/d/1FiVd9FkZEA29OT2nlzWbDRImtUuJ_n4l');
     });
 
     test('should return original URL for non-Google Drive URLs', () => {

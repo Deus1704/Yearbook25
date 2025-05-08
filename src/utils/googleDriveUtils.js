@@ -84,8 +84,9 @@ export const getGoogleDriveDirectUrl = (url) => {
     return url;
   }
 
-  // Return the direct download URL
-  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  // Return the direct download URL using the most reliable format for 2024
+  // This format works better with CORS restrictions
+  return `https://lh3.googleusercontent.com/d/${fileId}`;
 };
 
 /**

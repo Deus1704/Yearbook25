@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeholder';
-import { isGoogleDriveUrl, getGoogleDriveDirectUrl } from '../utils/googleDriveUtils';
+import { isGoogleDriveUrl, getGoogleDriveDirectUrl, extractGoogleDriveFileId } from '../utils/googleDriveUtils';
 
 /**
  * A component that directly loads images from the server or local placeholders
@@ -67,20 +67,44 @@ const DirectImageLoader = ({
     if (!attemptedFallback) {
       setAttemptedFallback(true);
 
-      // Strategy 1: If this is a Google Drive URL that failed, try the API endpoint
+      // Strategy 1: If this is a Google Drive URL that failed, try alternative formats
       if (isGoogleDriveUrl(src)) {
-        console.log('Google Drive URL failed, attempting to load from API endpoint as fallback');
+        console.log('Google Drive URL failed, attempting alternative formats');
 
         // Extract ID from URL if possible
-        const fileId = src.match(/[-\w]{25,}/);
-        if (fileId && fileId[0]) {
-          // Construct API endpoint URL based on type
-          const apiBase = type === 'memory' ? '/api/memories/' : '/api/profiles/';
-          const timestamp = new Date().getTime();
-          const fallbackUrl = `${apiBase}${fileId[0]}/image?t=${timestamp}`;
-          console.log(`Using API fallback URL: ${fallbackUrl}`);
-          setImageSrc(fallbackUrl);
-          return;
+        const fileId = extractGoogleDriveFileId(src);
+        if (fileId) {
+          // Try different URL formats in sequence based on what we've already tried
+          if (imageSrc.includes('lh3.googleusercontent.com')) {
+            // Try the drive.usercontent.google.com format
+            const alternateUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=view`;
+            console.log(`Trying alternative Google Drive format: ${alternateUrl}`);
+            setImageSrc(alternateUrl);
+            return;
+          }
+          else if (imageSrc.includes('drive.usercontent.google.com')) {
+            // Try the uc?export=view format
+            const alternateUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+            console.log(`Trying alternative Google Drive format: ${alternateUrl}`);
+            setImageSrc(alternateUrl);
+            return;
+          }
+          else if (imageSrc.includes('uc?export=view')) {
+            // Try the export=download format
+            const alternateUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+            console.log(`Trying alternative Google Drive format: ${alternateUrl}`);
+            setImageSrc(alternateUrl);
+            return;
+          }
+          else {
+            // If all Google Drive formats failed, try the API endpoint
+            const apiBase = type === 'memory' ? '/api/memories/' : '/api/profiles/';
+            const timestamp = new Date().getTime();
+            const fallbackUrl = `${apiBase}${fileId}/image?t=${timestamp}`;
+            console.log(`Using API fallback URL: ${fallbackUrl}`);
+            setImageSrc(fallbackUrl);
+            return;
+          }
         }
       }
       // Strategy 2: If this is an API endpoint that failed, try with a new cache-busting parameter
