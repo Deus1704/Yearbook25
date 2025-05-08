@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getGoogleDriveDirectUrl, isGoogleDriveUrl, extractGoogleDriveFileId } from '../utils/googleDriveUtils';
 import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeholder';
+import { markMemoryImageAsDeleted, markProfileAsDeleted } from '../services/api';
+
+// Create a cache to track deleted Google Drive files to avoid repeated attempts
+const deletedFilesCache = window.deletedFilesCache || new Set();
+
+// Make the cache available globally for other components
+window.deletedFilesCache = deletedFilesCache;
 
 /**
  * A component for displaying images from Google Drive with proper error handling
@@ -24,12 +31,14 @@ const GoogleDriveImage = ({
   type = 'profile',
   onLoad,
   onError,
+  imageId, // Add imageId prop to identify the image in the database
   ...rest
 }) => {
   const [imageSrc, setImageSrc] = useState('');
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [attemptedFormats, setAttemptedFormats] = useState([]);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   // Determine the default fallback based on the type
   const defaultFallback = type === 'memory' ? memoryPlaceholder : profilePlaceholder;
@@ -37,11 +46,34 @@ const GoogleDriveImage = ({
   // Use the provided fallback or the default
   const finalFallback = fallbackSrc || defaultFallback;
 
+  // Function to report a deleted image to the backend
+  const reportDeletedImage = useCallback(async (fileId) => {
+    if (!fileId || isDeleted) return;
+
+    try {
+      // Add to the deleted files cache
+      deletedFilesCache.add(fileId);
+      setIsDeleted(true);
+
+      // Report to the backend based on image type
+      if (type === 'memory' && imageId) {
+        await markMemoryImageAsDeleted(imageId);
+        console.log(`Reported deleted memory image to backend: ${imageId}`);
+      } else if (type === 'profile' && imageId) {
+        await markProfileAsDeleted(imageId);
+        console.log(`Reported deleted profile image to backend: ${imageId}`);
+      }
+    } catch (error) {
+      console.error(`Error reporting deleted ${type} image:`, error);
+    }
+  }, [type, imageId, isDeleted]);
+
   useEffect(() => {
     // Reset state when src changes
     setError(false);
     setLoaded(false);
     setAttemptedFormats([]);
+    setIsDeleted(false);
 
     if (!src) {
       console.warn('No source provided to GoogleDriveImage');
@@ -50,8 +82,21 @@ const GoogleDriveImage = ({
       return;
     }
 
-    // If it's a Google Drive URL, convert it to a direct URL
+    // Check if this is a Google Drive URL and if the file ID is in the deleted files cache
     if (isGoogleDriveUrl(src)) {
+      const fileId = extractGoogleDriveFileId(src);
+
+      if (fileId && deletedFilesCache.has(fileId)) {
+        console.warn(`Using fallback for known deleted Google Drive file: ${fileId}`);
+        setImageSrc(finalFallback);
+        setError(true);
+        setIsDeleted(true);
+
+        // Report to backend if not already reported
+        reportDeletedImage(fileId);
+        return;
+      }
+
       const directUrl = getGoogleDriveDirectUrl(src);
       console.log(`Converting Google Drive URL: ${src} to direct URL: ${directUrl}`);
 
@@ -72,7 +117,7 @@ const GoogleDriveImage = ({
 
       setImageSrc(urlWithCache);
     }
-  }, [src, finalFallback]);
+  }, [src, finalFallback, reportDeletedImage]);
 
   const handleError = (e) => {
     console.warn(`Failed to load image from URL: ${imageSrc}`);

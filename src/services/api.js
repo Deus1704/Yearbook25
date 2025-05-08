@@ -74,10 +74,11 @@ axios.interceptors.response.use(
 );
 
 // Profile related API calls
-export const getProfiles = async () => {
+export const getProfiles = async (includeDeleted = false) => {
   try {
-    console.log('Fetching profiles from:', `${API_URL}/profiles`);
-    const response = await axios.get(`${API_URL}/profiles`);
+    const url = `${API_URL}/profiles${includeDeleted ? '?includeDeleted=true' : ''}`;
+    console.log('Fetching profiles from:', url);
+    const response = await axios.get(url);
     console.log('Profiles fetched successfully:', response.data);
     return response.data;
   } catch (error) {
@@ -85,6 +86,28 @@ export const getProfiles = async () => {
     if (error.code === 'ERR_NETWORK') {
       console.error('Network error - please check if the backend server is running');
     }
+    throw error;
+  }
+};
+
+// Check and update status of profile images
+export const checkProfileImagesStatus = async () => {
+  try {
+    const response = await axios.post(`${API_URL}/profiles/check-status`);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking profile images status:', error.message);
+    throw error;
+  }
+};
+
+// Mark a profile as deleted
+export const markProfileAsDeleted = async (id) => {
+  try {
+    const response = await axios.put(`${API_URL}/profiles/${id}/mark-deleted`);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking profile as deleted:', error.message);
     throw error;
   }
 };
@@ -267,10 +290,32 @@ export const deleteMessage = async (id) => {
 };
 
 // Memory Images related API calls
-export const getMemoryImages = async () => {
-  const url = `${API_URL}/memories`;
+export const getMemoryImages = async (includeDeleted = false) => {
+  const url = `${API_URL}/memories${includeDeleted ? '?includeDeleted=true' : ''}`;
   const response = await axios.get(url);
   return response.data;
+};
+
+// Check and update status of memory images
+export const checkMemoryImagesStatus = async () => {
+  try {
+    const response = await axios.post(`${API_URL}/memories/check-status`);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking memory images status:', error.message);
+    throw error;
+  }
+};
+
+// Mark a memory image as deleted
+export const markMemoryImageAsDeleted = async (id) => {
+  try {
+    const response = await axios.put(`${API_URL}/memories/${id}/mark-deleted`);
+    return response.data;
+  } catch (error) {
+    console.error('Error marking memory image as deleted:', error.message);
+    throw error;
+  }
 };
 
 export const uploadMemoryImage = async (imageFile, uploadedBy = null) => {
