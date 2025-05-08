@@ -4,6 +4,7 @@ import { auth } from '../firebaseConfig';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import './LandingPage.css';
 import maprc_logo from '../assets/MAPRC.png';
+import metis_logo from '../assets/metis_logo_legacy.png';
 import backgroundVideo from '../assets/background.mp4';
 
 const LandingPage = () => {
@@ -68,21 +69,28 @@ const LandingPage = () => {
           </div>
         )}
 
-        {/* Footer with Logo and Text */}
+        {/* Footer with Logos and Text */}
         <footer className="landing-footer">
           <div className="footer-left">
-            <div className="footer-logo-container">
-              <img src={maprc_logo} alt="Logo" className="footer-logo" />
-            </div>
-            <div className="footer-text">
-              <p>This Website is Managed by</p>
-              <p>MAPRC IITGN</p>
+            <div className="footer-text-with-logos">
+              <div className="logo-item">
+                <img src={maprc_logo} alt="MAPRC Logo" className="footer-logo" />
+              </div>
+              <div className="footer-text">
+                <p>This Website is Managed by</p>
+                <p>MAPRC x METIS</p>
+              </div>
+              <div className="logo-item">
+                <img src={metis_logo} alt="METIS Logo" className="footer-logo" />
+              </div>
             </div>
           </div>
 
-          <div className="footer-right-text">
-            <p>Previous Yearbooks</p>
-            <p><a href="https://students.iitgn.ac.in/yearbook/2023/" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>Year Book of Class 2023</a></p>
+          <div className="footer-right">
+            <div className="footer-right-text">
+              <p>Previous Yearbooks</p>
+              <p><a href="https://students.iitgn.ac.in/yearbook/2023/" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'underline' }}>Yearbook of Class 2023</a></p>
+            </div>
           </div>
         </footer>
       </div>
