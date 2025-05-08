@@ -89,20 +89,52 @@ router.post('/', upload.single('image'), checkGraduatingStudent, async (req, res
 
     let imageId = null;
     let imageUrl = null;
+    let imageStored = false;
 
     // Upload image to Google Drive if provided
     if (imageFile) {
-      try {
-        const uploadResult = await fileStorage.uploadProfileImage(imageFile.buffer, user_id);
-        imageId = uploadResult.fileId;
-        imageUrl = uploadResult.webContentLink;
-        console.log('Image uploaded to Google Drive with ID:', imageId);
-      } catch (uploadError) {
-        console.error('Error uploading image to Google Drive:', uploadError);
-        console.log('Storing image in database directly as fallback');
+      console.log('Image file provided, attempting to upload to Google Drive');
+      console.log('Image file size:', imageFile.size, 'bytes');
+      console.log('Image file mimetype:', imageFile.mimetype);
 
-        // Store the image directly in the database as a fallback
+      // Check if Google Drive integration is available
+      const googleDriveAvailable = typeof fileStorage.uploadProfileImage === 'function';
+
+      if (googleDriveAvailable) {
         try {
+          // Verify that the buffer exists and is valid
+          if (!imageFile.buffer || imageFile.buffer.length === 0) {
+            console.error('Image buffer is empty or invalid');
+            throw new Error('Invalid image buffer');
+          }
+
+          console.log('Uploading image to Google Drive...');
+          const uploadResult = await fileStorage.uploadProfileImage(imageFile.buffer, user_id);
+
+          if (!uploadResult || !uploadResult.fileId) {
+            console.error('Upload result is missing fileId:', uploadResult);
+            throw new Error('Invalid upload result');
+          }
+
+          imageId = uploadResult.fileId;
+          imageUrl = uploadResult.webContentLink;
+          imageStored = true;
+          console.log('Image uploaded to Google Drive successfully');
+          console.log('File ID:', imageId);
+          console.log('Web Content Link:', imageUrl);
+        } catch (uploadError) {
+          console.error('Error uploading image to Google Drive:', uploadError);
+          console.log('Error details:', uploadError.message);
+          console.log('Will try storing image in database as fallback');
+        }
+      } else {
+        console.log('Google Drive integration not available, will store image in database');
+      }
+
+      // If Google Drive upload failed or is not available, store in database
+      if (!imageStored) {
+        try {
+          console.log('Storing image directly in database');
           // Create a new profile with the image stored directly
           const result = db.run(
             'INSERT INTO profiles (name, designation, description, image, user_id) VALUES (?, ?, ?, ?, ?)',
@@ -124,9 +156,13 @@ router.post('/', upload.single('image'), checkGraduatingStudent, async (req, res
           return;
         } catch (dbError) {
           console.error('Error storing image directly in database:', dbError);
+          console.log('Error details:', dbError.message);
+          console.log('Continuing without image');
           // Continue without image if both methods fail
         }
       }
+    } else {
+      console.log('No image file provided with profile creation');
     }
 
     // Create new profile if user doesn't have one
@@ -258,38 +294,88 @@ router.post('/:id/comments', async (req, res) => {
 // Get profile image
 router.get('/:id/image', async (req, res) => {
   try {
+    console.log(`Getting image for profile ID: ${req.params.id}`);
+
     // First check if we have Google Drive info
     const profile = db.get('SELECT image_id, image_url, image FROM profiles WHERE id = ?', [req.params.id]);
 
     if (!profile) {
+      console.log(`Profile not found with ID: ${req.params.id}`);
       return res.status(404).json({ message: 'Profile not found' });
     }
 
+    console.log('Profile image data:', {
+      hasImageUrl: !!profile.image_url,
+      hasImageId: !!profile.image_id,
+      hasDirectImage: !!profile.image,
+      imageUrl: profile.image_url,
+      imageId: profile.image_id
+    });
+
     // If we have a direct URL to the image, redirect to it
     if (profile.image_url) {
+      console.log(`Redirecting to direct image URL: ${profile.image_url}`);
+
+      // Set cache control headers before redirecting
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
       return res.redirect(profile.image_url);
     }
 
     // If we have a Google Drive image ID, try to fetch it
     if (profile.image_id) {
-      try {
-        const file = await fileStorage.getProfileImage(profile.image_id);
+      console.log(`Fetching image from Google Drive with ID: ${profile.image_id}`);
 
-        res.writeHead(200, {
-          'Content-Type': file.metadata.mimeType || 'image/jpeg',
-          'Content-Length': file.content.length
-        });
-        res.end(file.content);
-        return;
-      } catch (driveError) {
-        console.error('Error fetching image from Google Drive:', driveError);
-        console.log('Falling back to database image if available');
-        // Fall through to check for database image
+      // Check if Google Drive integration is available
+      const googleDriveAvailable = typeof fileStorage.getProfileImage === 'function';
+
+      if (googleDriveAvailable) {
+        try {
+          const file = await fileStorage.getProfileImage(profile.image_id);
+
+          if (!file || !file.content) {
+            console.error('Invalid file data returned from Google Drive');
+            throw new Error('Invalid file data');
+          }
+
+          console.log('Successfully retrieved image from Google Drive');
+          console.log('Content type:', file.metadata.mimeType || 'image/jpeg');
+          console.log('Content length:', file.content.length);
+
+          // Set cache control headers
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+
+          res.writeHead(200, {
+            'Content-Type': file.metadata.mimeType || 'image/jpeg',
+            'Content-Length': file.content.length
+          });
+          res.end(file.content);
+          return;
+        } catch (driveError) {
+          console.error('Error fetching image from Google Drive:', driveError);
+          console.log('Error details:', driveError.message);
+          console.log('Falling back to database image if available');
+          // Fall through to check for database image
+        }
+      } else {
+        console.log('Google Drive integration not available, falling back to database image');
       }
     }
 
     // If we have an image stored directly in the database, use that
     if (profile.image) {
+      console.log('Using image stored directly in database');
+      console.log('Image size:', profile.image.length, 'bytes');
+
+      // Set cache control headers
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
       res.writeHead(200, {
         'Content-Type': 'image/jpeg',
         'Content-Length': profile.image.length
@@ -299,9 +385,33 @@ router.get('/:id/image', async (req, res) => {
     }
 
     // If we get here, we don't have any image
+    console.log('No image found for profile');
+
+    // Return a default placeholder image instead of 404
+    const fs = require('fs');
+    const path = require('path');
+    const placeholderPath = path.join(__dirname, '../assets/profile-placeholder.jpg');
+
+    if (fs.existsSync(placeholderPath)) {
+      console.log('Serving placeholder image');
+      const placeholder = fs.readFileSync(placeholderPath);
+
+      res.writeHead(200, {
+        'Content-Type': 'image/jpeg',
+        'Content-Length': placeholder.length,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      res.end(placeholder);
+      return;
+    }
+
+    // If even the placeholder is not available, return 404
     return res.status(404).json({ message: 'Image not found' });
   } catch (err) {
     console.error('Error getting profile image:', err);
+    console.error('Stack trace:', err.stack);
     return res.status(500).json({ error: err.message });
   }
 });

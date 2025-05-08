@@ -16,11 +16,11 @@
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "axios": "^1.7.9",
+    "better-sqlite3": "^11.10.0",
     "body-parser": "^1.20.2",
-    "canvas": "^3.1.0",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "googleapis": "^129.0.0",
     "mongoose": "^8.2.0",
@@ -29,6 +29,7 @@
     "streamifier": "^0.1.1"
   },
   "devDependencies": {
+    "canvas": "^3.1.0",
     "nodemon": "^3.0.1"
   }
 }

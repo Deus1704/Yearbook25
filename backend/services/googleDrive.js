@@ -102,8 +102,42 @@ async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FO
   try {
     // Check if drive client is initialized
     if (!drive) {
+      console.error('Google Drive client not initialized');
       throw new Error('Google Drive client not initialized. Check your credentials.');
     }
+
+    // Validate folder ID
+    if (!folderId) {
+      console.error('No folder ID provided. Using default folder ID:', YEARBOOK_FOLDER_ID);
+      folderId = YEARBOOK_FOLDER_ID;
+
+      if (!folderId) {
+        throw new Error('No Google Drive folder ID available. Please set GOOGLE_DRIVE_FOLDER_ID in .env file.');
+      }
+    }
+
+    console.log('Uploading file to Google Drive folder:', folderId);
+    console.log('File name:', fileName);
+    console.log('MIME type:', mimeType);
+
+    // Validate file buffer
+    if (!fileBuffer || !Buffer.isBuffer(fileBuffer)) {
+      console.error('Invalid file buffer provided');
+      if (fileBuffer) {
+        console.log('Buffer type:', typeof fileBuffer);
+        console.log('Is Buffer:', Buffer.isBuffer(fileBuffer));
+
+        // Try to convert to buffer if it's not already
+        if (!Buffer.isBuffer(fileBuffer)) {
+          console.log('Attempting to convert to Buffer');
+          fileBuffer = Buffer.from(fileBuffer);
+        }
+      } else {
+        throw new Error('No file buffer provided');
+      }
+    }
+
+    console.log('File buffer size:', fileBuffer.length, 'bytes');
 
     // File metadata
     const fileMetadata = {
@@ -114,7 +148,7 @@ async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FO
     // Convert buffer to readable stream
     const { Readable } = require('stream');
     const readableStream = new Readable();
-    readableStream.push(Buffer.isBuffer(fileBuffer) ? fileBuffer : Buffer.from(fileBuffer));
+    readableStream.push(fileBuffer);
     readableStream.push(null); // Signal the end of the stream
 
     // Use the stream as the media body
@@ -123,12 +157,22 @@ async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FO
       body: readableStream,
     };
 
+    console.log('Creating file in Google Drive...');
+
     // Upload the file
     const file = await drive.files.create({
       resource: fileMetadata,
       media: media,
       fields: 'id, name, webViewLink, webContentLink',
     });
+
+    if (!file || !file.data || !file.data.id) {
+      console.error('File creation response is invalid:', file);
+      throw new Error('Invalid response from Google Drive API');
+    }
+
+    console.log('File created successfully with ID:', file.data.id);
+    console.log('Making file publicly accessible...');
 
     // Make the file publicly accessible
     await drive.permissions.create({
@@ -139,10 +183,16 @@ async function uploadFile(fileBuffer, fileName, mimeType, folderId = YEARBOOK_FO
       },
     });
 
-    console.log(`File uploaded with ID: ${file.data.id}`);
+    console.log('File permissions updated successfully');
+    console.log('Web view link:', file.data.webViewLink);
+    console.log('Web content link:', file.data.webContentLink);
+
     return file.data;
   } catch (error) {
     console.error('Error uploading file to Google Drive:', error.message);
+    if (error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
     throw error;
   }
 }
