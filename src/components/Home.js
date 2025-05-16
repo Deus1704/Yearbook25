@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Home.css';
 import { Link, useNavigate } from 'react-router-dom';
-import logo from '../assets/Logo.svg';
+import logo from '../assets/MAPRC.png';
 import Navbardesk from './Navbar';
 import { useAuth } from '../context/AuthContext';
 import { getProfiles, getProfileImageUrl } from '../services/api';
@@ -76,7 +76,7 @@ const Home = () => {
           <header className={`header ${!isMobile ? 'd-block text-center' : 'd-flex justify-content-between align-items-center'}`}>
             {isMobile ? (
               <>
-                <img src={logo} alt="Logo" className="logo" style={{ filter: 'invert(1)' }} />
+                <img src={logo} alt="Logo" className="logo" />
                 <h1>Yearbook 2025</h1>
                 <Link to="/build-profile" className="btn btn-outline-light" style={{ filter: 'invert(1)', borderRadius: '100%' }}>
                   <i className="fas fa-plus"></i>

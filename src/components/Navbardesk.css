@@ -26,7 +26,7 @@
 }
 
 .logo {
-  filter: brightness(0) invert(1); /* Make the logo white */
+  /* Removed filter to show the logo in its original golden color */
 }
 
 .navbar-spacer {

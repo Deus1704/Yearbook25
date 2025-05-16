@@ -3,7 +3,7 @@ import { auth } from '../firebaseConfig';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { Container, Button, Alert } from 'react-bootstrap';
-import logo from '../assets/Logo.svg';
+import logo from '../assets/MAPRC.png';
 import './Login.css';
 
 const GoogleSignIn = () => {

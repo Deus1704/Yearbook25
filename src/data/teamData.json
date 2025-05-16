@@ -1,14 +1,14 @@
 [
   {
     "id": 1,
-    "name": "Shaury Patel",
-    "designation": "Member",
-    "image": "team/Shaury patel.jpg",
+    "name": "Jayraj Dulange",
+    "designation": "Metis Secretary",
+    "image": "team/jayraj.jpg",
     "description": "Leading the team with vision and dedication, always pushing for excellence in every project we undertake.",
     "social": {
       "linkedin": "https://linkedin.com/",
       "github": "https://github.com/",
-      "instagram": "https://instagram.com/"
+      "instagram": "https://www.instagram.com/jaykun1704/"
     }
   },
   {
@@ -19,32 +19,31 @@
     "description": "Crafting beautiful and responsive user interfaces with a keen eye for detail and user experience.",
     "social": {
       "linkedin": "https://linkedin.com/",
-      "github": "https://github.com/",
-      "instagram": "https://instagram.com/"
+      "github": "https://github.com/mukul-771",
+      "instagram": "https://www.instagram.com/mukul_7711/"
     }
   },
   {
     "id": 3,
     "name": "Chandrabhan Patel",
-    "designation": "Sech Tecy/Member",
+    "designation": "Member",
     "image": "team/daddy.png",
     "description": "Building robust and scalable server-side solutions that power our applications with efficiency.",
     "social": {
       "linkedin": "https://linkedin.com/",
-      "github": "https://github.com/",
-      "instagram": "https://instagram.com/"
+      "github": "https://github.com/cpatel321",
+      "instagram": "https://www.instagram.com/chandrabhan._.patel/"
     }
   },
   {
     "id": 4,
     "name": "Suteekshna Mishra",
-    "designation": "Pata nahi",
+    "designation": "Yearbook Coordinator",
     "image": "team/ex-gen-secy.jpg",
     "description": "Creating intuitive and engaging user experiences through thoughtful design and creative problem-solving.",
     "social": {
       "linkedin": "https://linkedin.com/",
-      "github": "https://github.com/",
-      "instagram": "https://instagram.com/"
+      "instagram": "https://www.instagram.com/suteekshnam/"
     }
   },
   {
@@ -56,31 +55,40 @@
     "social": {
       "linkedin": "https://linkedin.com/",
       "github": "https://github.com/",
-      "instagram": "https://instagram.com/"
+      "instagram": "https://www.instagram.com/hi_omgupta/"
     }
   },
   {
     "id": 6,
     "name": "Kandarp Jani",
-    "designation": "Jiya Re Jiya Re",
+    "designation": "Member",
     "image": "team/bhai muh me lele.jpg",
     "description": "Developing compelling content strategies that effectively communicate our message and engage our audience.",
     "social": {
       "linkedin": "https://linkedin.com/",
-      "github": "https://github.com/",
-      "instagram": "https://instagram.com/"
+      "instagram": "https://www.instagram.com/kandarpjani2223/"
     }
   },
   {
     "id": 7,
     "name": "Pranjal Gaur",
-    "designation": "Rand",
+    "designation": "Member",
     "image": "team/thandi raand.jpg",
     "description": "Coordinating team efforts and ensuring projects are delivered on time, within scope, and with high quality.",
     "social": {
       "linkedin": "https://linkedin.com/",
-      "github": "https://github.com/",
-      "instagram": "https://instagram.com/"
+      "instagram": "https://www.instagram.com/pranjal15195gaur/"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Shaury Patel",
+    "designation": "Member",
+    "image": "team/Shaury patel.jpg",
+    "description": "Ensuring the smooth operation of our systems and providing exceptional support to our users.",
+    "social": {
+      "linkedin": "https://linkedin.com/",
+      "instagram": "https://www.instagram.com/shaury.heic/"
     }
   }
 ]

@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from '../assets/Logo.svg';
+import logo from '../assets/MAPRC.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Login.css';  // Import the custom CSS
