@@ -6,6 +6,7 @@
  */
 
 const backupService = require('../services/backupService');
+const googleDrive = require('../services/googleDrive');
 require('dotenv').config();
 
 // Default backup interval in hours
@@ -43,6 +44,8 @@ async function performBackup() {
     }
 
     console.log(`Starting scheduled backup at ${new Date().toISOString()}`);
+
+    // Try to create the backup with retry logic built into the backup service
     const result = await backupService.createBackup();
     console.log(`Backup completed successfully. File ID: ${result.fileId}`);
 
@@ -50,21 +53,50 @@ async function performBackup() {
     const backups = await backupService.listBackups();
     console.log(`Total backups: ${backups.length}`);
 
-    // Keep only the last 10 backups to save space
-    if (backups.length > 10) {
-      console.log('Cleaning up old backups...');
-      const oldBackups = backups.slice(10);
-      for (const backup of oldBackups) {
-        try {
-          await googleDrive.deleteFile(backup.id);
-          console.log(`Deleted old backup: ${backup.name}`);
-        } catch (deleteError) {
-          console.error(`Failed to delete old backup ${backup.name}:`, deleteError.message);
-        }
+    // Keep only the last 20 backups to save space (approximately 3.3 hours of backups at 10-minute intervals)
+    // This ensures we have enough history while preventing Google Drive from filling up
+    const MAX_BACKUPS_TO_KEEP = 20;
+
+    if (backups.length > MAX_BACKUPS_TO_KEEP) {
+      console.log(`Cleaning up old backups... Keeping the ${MAX_BACKUPS_TO_KEEP} most recent backups`);
+      const oldBackups = backups.slice(MAX_BACKUPS_TO_KEEP);
+
+      // Delete old backups in parallel with a limit of 3 concurrent deletions
+      const deletePromises = [];
+      const MAX_CONCURRENT_DELETIONS = 3;
+
+      for (let i = 0; i < oldBackups.length; i += MAX_CONCURRENT_DELETIONS) {
+        const batch = oldBackups.slice(i, i + MAX_CONCURRENT_DELETIONS);
+        const batchPromises = batch.map(async (backup) => {
+          try {
+            await googleDrive.deleteFile(backup.id);
+            console.log(`Deleted old backup: ${backup.name}`);
+            return { success: true, name: backup.name };
+          } catch (deleteError) {
+            console.error(`Failed to delete old backup ${backup.name}:`, deleteError.message);
+            return { success: false, name: backup.name, error: deleteError.message };
+          }
+        });
+
+        // Wait for the current batch to complete before starting the next batch
+        const results = await Promise.all(batchPromises);
+        deletePromises.push(...results);
       }
+
+      // Log summary of deletion results
+      const successfulDeletions = deletePromises.filter(r => r.success).length;
+      console.log(`Successfully deleted ${successfulDeletions} of ${oldBackups.length} old backups`);
     }
   } catch (error) {
     console.error('Error performing backup:', error.message);
+
+    // Log detailed error information for debugging
+    if (error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
+
+    // Even if there's an error, we don't want to crash the application
+    // The next scheduled backup will try again
   }
 }
 

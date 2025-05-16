@@ -48,11 +48,15 @@ async function initBackupService() {
 
 /**
  * Create a backup of the database
+ * @param {number} retryCount - Number of retries attempted (default: 0)
  * @returns {Promise<Object>} - The backup metadata
  */
-async function createBackup() {
+async function createBackup(retryCount = 0) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 30000; // 30 seconds
+
   try {
-    console.log('Creating database backup...');
+    console.log(`Creating database backup... (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})`);
 
     // Create a timestamp for the backup
     const timestamp = new Date().toISOString().replace(/:/g, '-');
@@ -73,6 +77,11 @@ async function createBackup() {
       backupData = await backupSQLite(backupDir);
     }
 
+    // Validate backup data
+    if (!backupData || Object.keys(backupData).length === 0) {
+      throw new Error('Backup data is empty or invalid');
+    }
+
     // Create a metadata file
     const metadataPath = path.join(backupDir, 'metadata.json');
     const metadata = {
@@ -87,39 +96,75 @@ async function createBackup() {
 
     fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
 
-    // Create a zip file of the backup
+    // Create a backup file
     const backupFileName = `yearbook-backup-${timestamp}.json`;
     const backupFilePath = path.join(backupDir, backupFileName);
 
     // Write the backup data to a file
     fs.writeFileSync(backupFilePath, JSON.stringify(backupData, null, 2));
 
-    // Upload the backup to Google Drive
+    // Upload the backup to Google Drive with retry logic
     console.log(`Uploading backup to Google Drive: ${backupFileName}`);
     const fileBuffer = fs.readFileSync(backupFilePath);
-    const uploadResult = await googleDrive.uploadFile(
-      fileBuffer,
-      backupFileName,
-      'application/json',
-      backupsFolderId
-    );
 
-    console.log(`Backup uploaded to Google Drive with ID: ${uploadResult.fileId}`);
+    let uploadResult;
+    try {
+      uploadResult = await googleDrive.uploadFile(
+        fileBuffer,
+        backupFileName,
+        'application/json',
+        backupsFolderId
+      );
+      console.log(`Backup uploaded to Google Drive with ID: ${uploadResult.id}`);
+    } catch (uploadError) {
+      console.error(`Error uploading backup to Google Drive: ${uploadError.message}`);
+
+      // Clean up temporary files before retrying
+      try {
+        if (fs.existsSync(backupFilePath)) fs.unlinkSync(backupFilePath);
+        if (fs.existsSync(metadataPath)) fs.unlinkSync(metadataPath);
+        if (fs.existsSync(backupDir)) fs.rmdirSync(backupDir);
+      } catch (cleanupError) {
+        console.error(`Error cleaning up temporary files: ${cleanupError.message}`);
+      }
+
+      // Retry logic for upload failures
+      if (retryCount < MAX_RETRIES) {
+        console.log(`Retrying backup in ${RETRY_DELAY / 1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return createBackup(retryCount + 1);
+      } else {
+        throw new Error(`Failed to upload backup after ${MAX_RETRIES + 1} attempts: ${uploadError.message}`);
+      }
+    }
 
     // Clean up temporary files
-    fs.unlinkSync(backupFilePath);
-    fs.unlinkSync(metadataPath);
-    fs.rmdirSync(backupDir);
+    try {
+      fs.unlinkSync(backupFilePath);
+      fs.unlinkSync(metadataPath);
+      fs.rmdirSync(backupDir);
+    } catch (cleanupError) {
+      console.error(`Warning: Error cleaning up temporary files: ${cleanupError.message}`);
+      // Continue despite cleanup errors
+    }
 
     return {
-      fileId: uploadResult.fileId,
-      fileName: uploadResult.fileName,
+      fileId: uploadResult.id,
+      fileName: uploadResult.name,
       timestamp,
       metadata
     };
   } catch (error) {
-    console.error('Error creating backup:', error.message);
-    throw error;
+    console.error(`Error creating backup: ${error.message}`);
+
+    // Retry logic for general failures
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Retrying backup in ${RETRY_DELAY / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return createBackup(retryCount + 1);
+    } else {
+      throw new Error(`Failed to create backup after ${MAX_RETRIES + 1} attempts: ${error.message}`);
+    }
   }
 }
 
