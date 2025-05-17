@@ -11,6 +11,7 @@ import {
   checkMemoryImagesStatus,
   checkProfileImagesStatus
 } from '../services/api';
+import { getCachedImages } from '../services/imagePreloader';
 import Navbardesk from './Navbar';
 import { Container, Form, Button, Spinner } from 'react-bootstrap';
 import { FaPlus, FaTimes, FaCloudUploadAlt } from 'react-icons/fa';
@@ -248,6 +249,24 @@ const Gallery = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+
+      // First, check if we have cached images from preloading
+      const cachedImages = getCachedImages();
+
+      if (cachedImages.isLoaded) {
+        console.log('Using preloaded images from cache');
+        setProfiles(cachedImages.profiles.filter(img => img.type === 'profile'));
+
+        // Combine and shuffle all images
+        const filteredImages = [...cachedImages.profiles, ...cachedImages.memories];
+        setAllImages(filteredImages.sort(() => 0.5 - Math.random()));
+        setLoading(false);
+        return;
+      }
+
+      // If no cached images, fetch them directly
+      console.log('No cached images available, fetching directly');
+
       // Fetch both profiles and memory images in parallel
       const [profilesData, memoryImagesData] = await Promise.all([
         getProfiles(),

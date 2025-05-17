@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { auth } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import { preloadGalleryImages } from '../services/imagePreloader';
 
 export const AuthContext = createContext();
 
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
-    
+
     // Then listen for auth state changes from Firebase
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && user.email && user.email.endsWith('@iitgn.ac.in')) {
@@ -30,6 +31,12 @@ export const AuthProvider = ({ children }) => {
           displayName: user.displayName,
           photoURL: user.photoURL
         }));
+
+        // Start preloading gallery images in the background
+        console.log('User logged in, starting background preload of gallery images');
+        preloadGalleryImages().catch(err =>
+          console.error('Error preloading gallery images:', err)
+        );
       } else {
         // If user is logged out or doesn't have the right domain
         setCurrentUser(null);

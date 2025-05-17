@@ -1,0 +1,45 @@
+.footer {
+  text-align: center;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #6c757d;
+  border-top: 1px solid #eee;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: white;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer a {
+  color: #007bff;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Add padding to the bottom of the content to prevent footer from covering content */
+.content-with-footer {
+  padding-bottom: 50px;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .footer {
+    padding: 8px 0;
+    font-size: 12px;
+    bottom: 60px; /* Position above mobile navbar */
+  }
+
+  .content-with-footer {
+    padding-bottom: 110px; /* More padding for mobile to account for navbar + footer */
+  }
+}
