@@ -26,13 +26,110 @@
 .ghibli-search {
   position: relative;
   z-index: 3;
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 10px 15px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 30px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+  animation: searchGlow 4s infinite ease-in-out;
+}
+
+.ghibli-search:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
 }
 
 .ghibli-input {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(44, 62, 80, 0.3);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(5px);
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #2c3e50;
+  width: 100%;
+  padding: 8px 15px 8px 40px;
+}
+
+.ghibli-input::placeholder {
+  color: #7f8c8d;
+  opacity: 0.8;
+}
+
+.ghibli-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.ghibli-input:focus + .ghibli-search {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  border-color: rgba(52, 152, 219, 0.5);
+}
+
+.ghibli-search-icon {
+  position: absolute;
+  left: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #3498db;
+  font-size: 1.2rem;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ghibli-search-clear {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #7f8c8d;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ghibli-search-clear:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #e74c3c;
+}
+
+/* Mobile responsiveness for search bar */
+@media (max-width: 768px) {
+  .ghibli-search {
+    max-width: 90%;
+    margin: 15px auto;
+    padding: 8px 12px;
+  }
+
+  .ghibli-input {
+    font-size: 1rem;
+    padding: 6px 10px 6px 35px;
+  }
+
+  .ghibli-search-icon {
+    left: 15px;
+    font-size: 1rem;
+  }
+
+  .ghibli-search-clear {
+    right: 15px;
+    width: 25px;
+    height: 25px;
+  }
 }
 
 .ghibli-header {
@@ -106,6 +203,18 @@
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes searchGlow {
+  0% {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.25);
+  }
+  100% {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   }
 }
 

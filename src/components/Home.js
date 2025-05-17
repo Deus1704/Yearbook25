@@ -108,13 +108,23 @@ const Home = () => {
           </header>
 
           <div className="search-bar ghibli-search">
+            <i className="fas fa-search ghibli-search-icon"></i>
             <input
               type="text"
-              placeholder="Search profiles..."
+              placeholder="     Search profiles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`${isMobile ? "profile-search-mobile" : "profile-search-desktop"} ghibli-input`}
+              className="ghibli-input"
             />
+            {searchQuery && (
+              <button
+                className="ghibli-search-clear"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            )}
           </div>
 
           <div className="profiles-container">

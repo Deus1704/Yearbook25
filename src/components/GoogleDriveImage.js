@@ -4,10 +4,44 @@ import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeho
 import { markMemoryImageAsDeleted, markProfileAsDeleted } from '../services/api';
 
 // Create a cache to track deleted Google Drive files to avoid repeated attempts
-const deletedFilesCache = window.deletedFilesCache || new Set();
+// Initialize from localStorage if available to persist across page reloads
+const initializeDeletedFilesCache = () => {
+  // First check if we already have a global cache
+  if (window.deletedFilesCache) {
+    return window.deletedFilesCache;
+  }
+
+  // Try to load from localStorage
+  try {
+    const cachedIds = localStorage.getItem('deletedFilesCache');
+    if (cachedIds) {
+      const parsedIds = JSON.parse(cachedIds);
+      console.log(`Loaded ${parsedIds.length} deleted file IDs from localStorage`);
+      return new Set(parsedIds);
+    }
+  } catch (error) {
+    console.error('Error loading deleted files cache from localStorage:', error);
+  }
+
+  // If all else fails, create a new empty set
+  return new Set();
+};
+
+const deletedFilesCache = initializeDeletedFilesCache();
 
 // Make the cache available globally for other components
 window.deletedFilesCache = deletedFilesCache;
+
+// Helper function to save the cache to localStorage
+const saveDeletedFilesCache = () => {
+  try {
+    const idsArray = Array.from(deletedFilesCache);
+    localStorage.setItem('deletedFilesCache', JSON.stringify(idsArray));
+    console.log(`Saved ${idsArray.length} deleted file IDs to localStorage`);
+  } catch (error) {
+    console.error('Error saving deleted files cache to localStorage:', error);
+  }
+};
 
 /**
  * A component for displaying images from Google Drive with proper error handling
@@ -53,6 +87,10 @@ const GoogleDriveImage = ({
     try {
       // Add to the deleted files cache
       deletedFilesCache.add(fileId);
+
+      // Save the updated cache to localStorage
+      saveDeletedFilesCache();
+
       setIsDeleted(true);
 
       // Report to the backend based on image type
@@ -214,6 +252,14 @@ const GoogleDriveImage = ({
       if (fileId) {
         console.warn(`Adding file ID to deleted files cache: ${fileId}`);
         deletedFilesCache.add(fileId);
+
+        // Save the updated cache to localStorage
+        saveDeletedFilesCache();
+
+        // Report to backend if not already reported
+        if (imageId) {
+          reportDeletedImage(fileId);
+        }
       }
     }
 

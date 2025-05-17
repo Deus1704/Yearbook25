@@ -396,11 +396,29 @@ const Gallery = () => {
   // Effect to handle screen size changes and fetch data
   useEffect(() => {
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const width = window.innerWidth;
+      const mobile = width <= 768;
+      setIsMobile(mobile);
+      console.log(`Screen size changed: ${width}px, isMobile: ${mobile}`);
     };
 
     checkScreenSize();
     fetchData();
+
+    // Log the deleted files cache for debugging
+    try {
+      const deletedCache = window.deletedFilesCache || new Set();
+      console.log(`Current deleted files cache has ${deletedCache.size} entries`);
+
+      // Try to load from localStorage for comparison
+      const cachedIds = localStorage.getItem('deletedFilesCache');
+      if (cachedIds) {
+        const parsedIds = JSON.parse(cachedIds);
+        console.log(`localStorage deleted files cache has ${parsedIds.length} entries`);
+      }
+    } catch (error) {
+      console.error('Error checking deleted files cache:', error);
+    }
 
     // Set up an interval to refresh the data every 5 minutes
     const refreshInterval = setInterval(fetchData, 5 * 60 * 1000);

@@ -6,6 +6,17 @@ import { isGoogleDriveUrl, getGoogleDriveDirectUrl, extractGoogleDriveFileId } f
 // This helps us track which Google Drive files have been deleted
 const deletedFilesCache = window.deletedFilesCache || new Set();
 
+// Helper function to save the cache to localStorage
+const saveDeletedFilesCache = () => {
+  try {
+    const idsArray = Array.from(deletedFilesCache);
+    localStorage.setItem('deletedFilesCache', JSON.stringify(idsArray));
+    console.log(`Saved ${idsArray.length} deleted file IDs to localStorage from DirectImageLoader`);
+  } catch (error) {
+    console.error('Error saving deleted files cache to localStorage:', error);
+  }
+};
+
 /**
  * A component that directly loads images from the server or local placeholders
  * Enhanced to handle Google Drive URLs and CORS issues
@@ -192,6 +203,9 @@ const DirectImageLoader = ({
       if (fileId) {
         console.warn(`Adding file ID to deleted files cache: ${fileId}`);
         deletedFilesCache.add(fileId);
+
+        // Save the updated cache to localStorage
+        saveDeletedFilesCache();
 
         // Make the cache available globally for other components
         window.deletedFilesCache = deletedFilesCache;
