@@ -1,0 +1,85 @@
+.ghibli-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.ghibli-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1s ease;
+}
+
+.fade-in {
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+.ghibli-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+/* Floating elements */
+.floating-element {
+  position: absolute;
+  pointer-events: none;
+}
+
+.cloud {
+  animation: float-cloud linear infinite;
+}
+
+.leaf {
+  animation: float-leaf linear infinite;
+}
+
+.floating-element img {
+  width: 100%;
+  height: auto;
+  max-width: 200px;
+}
+
+@keyframes float-cloud {
+  from {
+    transform: translateX(0) scale(1);
+  }
+  to {
+    transform: translateX(-100vw) scale(1);
+  }
+}
+
+@keyframes float-leaf {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(20px, 20px) rotate(90deg);
+  }
+  50% {
+    transform: translate(0, 40px) rotate(180deg);
+  }
+  75% {
+    transform: translate(-20px, 20px) rotate(270deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}

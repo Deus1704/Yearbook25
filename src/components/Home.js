@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './Home.css';
+import './HomeGhibli.css';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../assets/MAPRC.png';
 import Navbardesk from './Navbar';
@@ -11,6 +12,8 @@ import { profilePlaceholder } from '../assets/profile-placeholder';
 import DirectImageLoader from './DirectImageLoader';
 import GoogleDriveImage from './GoogleDriveImage';
 import { isGoogleDriveUrl } from '../utils/googleDriveUtils';
+// Import a direct image for background
+import ghibliBackground from '../assets/ghibli_images/09F156D1-BCB5-4805-B281-6C0493F407A6.PNG';
 
 const Home = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -70,59 +73,73 @@ const Home = () => {
 
   return (
     <>
-      <div className="app-container">
+      {/* Direct background image */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `url(${ghibliBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        opacity: 0.7,
+        zIndex: 0
+      }} />
+
+      <div className="app-container ghibli-theme">
 
         <div className="content-container">
-          <header className={`header ${!isMobile ? 'd-block text-center' : 'd-flex justify-content-between align-items-center'}`}>
+          <header className={`header ghibli-header ${!isMobile ? 'd-block text-center' : 'd-flex justify-content-between align-items-center'}`}>
             {isMobile ? (
               <>
                 <img src={logo} alt="Logo" className="logo" />
-                <h1>Yearbook 2025</h1>
-                <Link to="/build-profile" className="btn btn-outline-light" style={{ filter: 'invert(1)', borderRadius: '100%' }}>
+                <h1 className="ghibli-title">Yearbook 2025</h1>
+                <Link to="/build-profile" className="btn btn-outline-light ghibli-btn" style={{ borderRadius: '100%' }}>
                   <i className="fas fa-plus"></i>
                 </Link>
               </>
             ) : (
               <>
-                <h1 className="mb-3">Yearbook 2025 Gallery</h1>
-                <p className="text-muted">Browse through the profiles of your classmates</p>
+                <h1 className="mb-3 ghibli-title">Yearbook 2025 Gallery</h1>
+                <p className="ghibli-subtitle">Browse through the profiles of your classmates</p>
               </>
             )}
           </header>
 
-          <div className="search-bar">
+          <div className="search-bar ghibli-search">
             <input
               type="text"
               placeholder="Search profiles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={isMobile ? "profile-search-mobile" : "profile-search-desktop"}
+              className={`${isMobile ? "profile-search-mobile" : "profile-search-desktop"} ghibli-input`}
             />
           </div>
 
           <div className="profiles-container">
             {loading ? (
               <div className="loading-container text-center py-5">
-                <div className="spinner-border text-primary" role="status">
+                <div className="spinner-border ghibli-spinner" role="status">
                   <span className="visually-hidden">Loading...</span>
                 </div>
-                <p className="mt-3">Loading profiles...</p>
+                <p className="mt-3 ghibli-text">Loading profiles...</p>
               </div>
             ) : error ? (
               <div className="error-container text-center py-5">
                 <div className="text-danger mb-3">
                   <i className="fas fa-exclamation-circle fa-3x"></i>
                 </div>
-                <p className="text-danger">{error}</p>
+                <p className="text-danger ghibli-text">{error}</p>
                 <button
-                  className="btn btn-outline-primary mt-3"
+                  className="btn btn-outline-primary mt-3 ghibli-btn"
                   onClick={() => window.location.reload()}
                 >
                   <i className="fas fa-sync-alt me-2"></i> Retry
                 </button>
               </div>
             ) : filteredProfiles.length === 0 ? (
-              <p className="text-center text-muted my-4">No profiles match your search</p>
+              <p className="text-center ghibli-text my-4">No profiles match your search</p>
             ) : (
               <div className="profiles-gallery-grid">
                 {filteredProfiles.map((profile) => (
@@ -131,8 +148,8 @@ const Home = () => {
                     key={profile.id}
                     className="profile-gallery-item"
                   >
-                    <div className="profile-gallery-card">
-                      <div className="profile-gallery-img-container">
+                    <div className="profile-gallery-card ghibli-card">
+                      <div className="profile-gallery-img-container ghibli-img-container">
                         {profile.image_url && isGoogleDriveUrl(profile.image_url) ? (
                           <GoogleDriveImage
                             src={profile.image_url}
@@ -150,9 +167,9 @@ const Home = () => {
                           />
                         )}
                       </div>
-                      <div className="profile-gallery-info">
-                        <h5 className="profile-gallery-name">{profile.name}</h5>
-                        <p className="profile-gallery-designation">{profile.designation}</p>
+                      <div className="profile-gallery-info ghibli-info">
+                        <h5 className="profile-gallery-name ghibli-name">{profile.name}</h5>
+                        <p className="profile-gallery-designation ghibli-designation">{profile.designation}</p>
                       </div>
                     </div>
                   </Link>
