@@ -2,17 +2,18 @@ body {
     margin: 0;
     font-family: Arial, sans-serif;
   }
-  
+
   .profile-container1 {
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    align-items: flex-start;
+    min-height: 100vh;
     background: linear-gradient(180deg, #e0f7fa 0%, #fff3e0 100%);
     padding: 20px;
     box-sizing: border-box;
+    padding-bottom: 80px; /* Space for the navbar at bottom */
   }
-  
+
   .back-button1 {
     position: absolute;
     top: 20px;
@@ -20,8 +21,9 @@ body {
     color: black;
     text-decoration: none;
     font-size: 24px;
+    z-index: 10;
   }
-  
+
   .profile-card1 {
     background-color: white;
     border-radius: 20px;
@@ -30,57 +32,285 @@ body {
     max-width: 500px;
     width: 100%;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
   }
-  
+
+  /* Profile section styles */
+  .profile-section {
+    padding-bottom: 20px;
+  }
+
   .profile-image1 {
     width: 100%;
     height: auto;
+    border-radius: 20px 20px 0 0;
   }
-  
+
   .profile-details1 {
     padding: 20px;
   }
-  
+
   .profile-details1 h1 {
     margin: 0;
     font-size: 24px;
     color: #333;
   }
-  
+
   .profile-designation1 {
     font-size: 18px;
     color: #666;
     margin: 10px 0;
   }
-  
+
   .profile-description1 {
     font-size: 16px;
     color: #666;
+    margin-top: 15px;
+    line-height: 1.5;
+    font-style: italic;
+    position: relative;
+    padding: 10px 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    border-left: 3px solid #007bff;
   }
-  
+
+  .profile-description1::before {
+    content: '"';
+    font-size: 24px;
+    color: #007bff;
+    position: absolute;
+    left: 8px;
+    top: 0;
+  }
+
+  .profile-description1::after {
+    content: '"';
+    font-size: 24px;
+    color: #007bff;
+    position: absolute;
+    right: 8px;
+    bottom: 0;
+  }
+
+  /* Messages section styles */
+  .messages-section {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    text-align: left;
+  }
+
+  .messages-title {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .messages-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+
+  .message-item {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .message-author {
+    margin: 0 0 5px 0;
+    color: #007bff;
+    font-size: 14px;
+  }
+
+  .message-content {
+    margin: 0;
+    color: #333;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .no-messages {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px 0;
+  }
+
+  /* Mobile-specific message styles */
+  .mobile-messages .message-item {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-left: 3px solid #007bff;
+    transition: none;
+    transform: none !important;
+  }
+
+  .mobile-messages .message-author {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 5px 0;
+    text-align: left;
+  }
+
+  .mobile-messages .message-content {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  .message-form {
+    margin-top: 15px;
+  }
+
+  .message-input-group {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .message-input {
+    flex: 1;
+    border: none;
+    padding: 10px 15px;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .send-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    border-radius: 0 20px 20px 0;
+  }
+
+  .send-button:hover:not(:disabled) {
+    background-color: #0069d9;
+  }
+
+  .send-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+
   @media (max-width: 768px) {
     .profile-container1 {
       padding: 10px;
+      padding-bottom: 80px; /* Space for the navbar at bottom */
     }
-  
+
     .profile-card1 {
       margin-top: 60px; /* To ensure the back button is visible */
     }
-  
+
     .profile-details1 {
       padding: 15px;
     }
-  
+
     .profile-details1 h1 {
       font-size: 20px;
     }
-  
+
     .profile-designation1 {
       font-size: 16px;
     }
-  
+
     .profile-description1 {
       font-size: 14px;
+      padding: 8px 15px;
+    }
+
+    .profile-description1::before,
+    .profile-description1::after {
+      font-size: 18px;
+    }
+
+    .messages-section {
+      padding: 15px;
+    }
+
+    .messages-title {
+      font-size: 18px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .messages-title::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 2px;
+      background: #007bff;
+      border-radius: 2px;
+    }
+
+    /* Simple message style for mobile profile view */
+    .messages-list {
+      max-height: none;
+      margin-bottom: 15px;
+    }
+
+    .message-item {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      border-left: 3px solid #007bff;
+    }
+
+    .message-author {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 5px 0;
+    }
+
+    .message-content {
+      font-size: 14px;
+      color: #555;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .no-messages {
+      text-align: center;
+      color: #6c757d;
+      font-style: italic;
+      padding: 15px 0;
+      font-size: 14px;
+    }
+
+    .message-input-group {
+      border-radius: 8px;
+    }
+
+    .message-input {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+
+    .send-button {
+      padding: 8px 12px;
     }
   }
-  

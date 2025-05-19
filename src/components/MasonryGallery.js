@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './MasonryGallery.css';
 import { isGoogleDriveUrl, extractGoogleDriveFileId } from '../utils/googleDriveUtils';
 import GoogleDriveImage from './GoogleDriveImage';
@@ -18,12 +18,18 @@ const MasonryGallery = ({ images }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [columnCount, setColumnCount] = useState(4);
   const [deletedFilesCache, setDeletedFilesCache] = useState(window.deletedFilesCache || new Set());
+  const [retryCount, setRetryCount] = useState(0);
+  const galleryRef = useRef(null);
 
   // Effect to handle screen size changes
   useEffect(() => {
     const checkScreenSize = () => {
       const width = window.innerWidth;
-      const mobile = width <= 768;
+      const userAgent = navigator.userAgent;
+      const mobileDetected = /iPhone|iPad|iPod|Android/i.test(userAgent);
+
+      // Set mobile flag based on both screen size and user agent
+      const mobile = width <= 768 || mobileDetected;
       setIsMobile(mobile);
 
       // Adjust column count based on screen width
@@ -43,6 +49,14 @@ const MasonryGallery = ({ images }) => {
 
     // Add event listener for resize
     window.addEventListener('resize', checkScreenSize);
+
+    // For mobile devices only, clear the deleted files cache to ensure images load properly
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobileDevice && window.deletedFilesCache) {
+      console.log('Mobile device detected, clearing deleted files cache in MasonryGallery');
+      window.deletedFilesCache = new Set();
+      setDeletedFilesCache(new Set());
+    }
 
     // Cleanup
     return () => {
@@ -91,6 +105,29 @@ const MasonryGallery = ({ images }) => {
 
   const columns = splitIntoColumns(images);
 
+  // Effect to retry loading images if needed - ONLY for mobile devices
+  useEffect(() => {
+    // Only apply this for mobile devices
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // If we're on mobile and have images but some might be failing
+    if (isMobileDevice && images && images.length > 0 && retryCount < 2) {
+      // Set a timer to retry loading images
+      const timer = setTimeout(() => {
+        console.log(`Mobile view: Retrying image load attempt ${retryCount + 1}`);
+        setRetryCount(prev => prev + 1);
+
+        // Force refresh the gallery by clearing and resetting the deleted files cache
+        if (window.deletedFilesCache) {
+          window.deletedFilesCache = new Set();
+          setDeletedFilesCache(new Set());
+        }
+      }, 3000); // Wait 3 seconds before retry
+
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, images, retryCount]);
+
   // Render an individual image with enhanced error handling
   const renderImage = (image, index) => {
     // Skip invalid images
@@ -101,7 +138,16 @@ const MasonryGallery = ({ images }) => {
 
     // Determine the image source
     let imageSrc = image.tempImage || image.imageUrl;
-    if (!imageSrc && image.id) {
+
+    // Check if we're on a mobile device
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // For mobile devices only, prefer the API endpoint directly to avoid CORS issues
+    if (isMobileDevice && image.id) {
+      const timestamp = new Date().getTime();
+      imageSrc = `/api/memories/${image.id}/image?t=${timestamp}`;
+      console.log(`Mobile view: Using direct API endpoint for image ${image.id}`);
+    } else if (!imageSrc && image.id) {
       imageSrc = getMemoryImageUrl(image.id);
     }
 
@@ -129,9 +175,14 @@ const MasonryGallery = ({ images }) => {
       ? `${imageSrc}&t=${timestamp}`
       : `${imageSrc}?t=${timestamp}`;
 
+    // For mobile, add a key with retry count to force re-render on retry
+    const itemKey = isMobileDevice
+      ? `${image.id || 'temp'}-${index}-retry-${retryCount}`
+      : `${image.id || 'temp'}-${index}`;
+
     return (
-      <div className="masonry-item" key={`${image.id || 'temp'}-${index}`}>
-        {isGoogleDrive ? (
+      <div className="masonry-item" key={itemKey}>
+        {isGoogleDrive && !isMobileDevice ? (
           <GoogleDriveImage
             src={urlWithCache}
             alt={image.name || 'Memory image'}

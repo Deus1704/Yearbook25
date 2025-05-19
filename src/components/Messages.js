@@ -31,20 +31,37 @@ const Messages = () => {
     };
   }, []);
 
+  // Initialize with fallback messages immediately
   useEffect(() => {
+    // Set initial state with fallback messages
+    setMessages([]);
+    // Then fetch real messages
     fetchMessages();
   }, []);
 
   const fetchMessages = async () => {
+    // Always show loading state when fetching messages
     setLoading(true);
     setError(null);
+
     try {
       const data = await getMessages();
-      setMessages(data);
+
+      // Check if we got actual messages from the API
+      if (data && data.length > 0) {
+        // Add a small delay before updating messages to ensure smooth transition
+        setTimeout(() => {
+          setMessages(data);
+          setLoading(false);
+        }, 300);
+      } else {
+        // If no messages were returned, keep using fallback messages
+        console.log('No messages returned from API, using fallback messages');
+        setLoading(false);
+      }
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -104,9 +121,10 @@ const Messages = () => {
     // If there are no messages, use fallback messages
     const messagesToUse = originalMessages.length === 0 ? fallbackMessages : originalMessages;
 
-    // Create a longer array by repeating the messages, but we'll use different
-    // messages in different rows to avoid repetition
-    return [...messagesToUse, ...messagesToUse];
+    // Create a longer array by repeating the messages multiple times
+    // This ensures we have enough messages to fill the entire row
+    // and create a seamless infinite scroll effect
+    return [...messagesToUse, ...messagesToUse, ...messagesToUse, ...messagesToUse];
   };
 
   // Render message item in memory wall style
@@ -119,6 +137,8 @@ const Messages = () => {
 
   // Render testimonial wall
   const renderTestimonialWall = () => {
+    // Only use fallback messages when there are no real messages available
+    // This ensures we always show real messages when they're loaded
     const messagesToUse = messages.length === 0 ? fallbackMessages : messages;
 
     // Split messages into three groups to avoid repetition across rows
@@ -144,7 +164,10 @@ const Messages = () => {
         <div className="testimonial-wall">
           {/* First row - left to right */}
           <div className="testimonial-row">
-            <div className="testimonial-track">
+            <div className="testimonial-track" style={{
+              animation: 'scroll 60s linear infinite',
+              animationDelay: '-10s'
+            }}>
               {createScrollMessages(firstRowMsgs).map((message, index) =>
                 renderMessageItem(message, index, 1)
               )}
@@ -153,16 +176,22 @@ const Messages = () => {
 
           {/* Second row - right to left (reversed) */}
           <div className="testimonial-row">
-            <div className="testimonial-track" style={{ animation: 'scroll 50s linear infinite reverse' }}>
+            <div className="testimonial-track" style={{
+              animation: 'scroll 75s linear infinite reverse', /* Medium speed for the middle row */
+              animationDelay: '-10s'
+            }}>
               {createScrollMessages(secondRowMsgs).map((message, index) =>
                 renderMessageItem(message, index, 2)
               )}
             </div>
           </div>
 
-          {/* Third row - left to right (different speed) */}
+          {/* Third row - left to right (slower speed) */}
           <div className="testimonial-row">
-            <div className="testimonial-track" style={{ animation: 'scroll 70s linear infinite' }}>
+            <div className="testimonial-track" style={{
+              animation: 'scroll 90s linear infinite', /* Slower animation for the third row */
+              animationDelay: '-10s'
+            }}>
               {createScrollMessages(thirdRowMsgs).map((message, index) =>
                 renderMessageItem(message, index, 3)
               )}
@@ -170,7 +199,7 @@ const Messages = () => {
           </div>
         </div>
 
-        {messages.length === 0 && (
+        {!loading && messages.length === 0 && (
           <div className="text-center mt-3 mb-4">
             <Alert variant="info">
               <p className="mb-0">These are example messages. Be the first to leave your own memory by clicking the + button!</p>
@@ -192,16 +221,23 @@ const Messages = () => {
           <h2 className="messages-title">Wall of Memories</h2>
           <p className="messages-subtitle">A place for seniors and juniors to share heartfelt messages and memories with each other.</p>
 
-          {loading ? (
-            <div className="text-center p-5">
-              <Spinner animation="border" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </Spinner>
-            </div>
-          ) : error ? (
+          {/* Always render the testimonial wall with fallback messages while loading */}
+          <div className={loading ? "testimonial-wall-wrapper loading" : "testimonial-wall-wrapper"}>
+            {renderTestimonialWall()}
+
+            {/* Show loading spinner overlay while loading */}
+            {loading && (
+              <div className="loading-overlay">
+                <Spinner animation="border" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </Spinner>
+              </div>
+            )}
+          </div>
+
+          {/* Show error if there is one */}
+          {error && (
             <Alert variant="danger" className="m-3">{error}</Alert>
-          ) : (
-            renderTestimonialWall()
           )}
 
           {/* Floating add button */}

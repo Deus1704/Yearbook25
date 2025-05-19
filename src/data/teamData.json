@@ -2,8 +2,8 @@
   {
     "id": 1,
     "name": "Jayraj Dulange",
-    "designation": "Metis Secretary",
-    "image": "team/jayraj.jpg",
+    "designation": "Dev Daddy",
+    "image": "team/jayraj.png",
     "description": "Leading the team with vision and dedication, always pushing for excellence in every project we undertake.",
     "social": {
       "linkedin": "https://in.linkedin.com/in/jayraj-dulange-91b74a251",
@@ -14,7 +14,7 @@
   {
     "id": 2,
     "name": "Mukul Meena",
-    "designation": "MAPRC Secretary",
+    "designation": "Aesthetic Designer",
     "image": "team/mukul meena.jpeg",
     "description": "Crafting beautiful and responsive user interfaces with a keen eye for detail and user experience.",
     "social": {
@@ -25,8 +25,20 @@
   },
   {
     "id": 3,
+    "name": "Kailash Dusad",
+    "designation": "Dev Daddy",
+    "image": "team/kailash.jpeg",
+    "description": "Junior Undergraduate at IIT Gandhinagar studying Electrical Engineering.",
+    "social": {
+      "linkedin": "https://www.linkedin.com/in/kailash-dusad",
+      "github": "https://github.com/KailashDusad",
+      "instagram": "https://www.instagram.com/kailash_dusad_07/"
+    }
+  },
+  {
+    "id": 4,
     "name": "Chandrabhan Patel",
-    "designation": "Member",
+    "designation": "Sanskari Hecker",
     "image": "team/daddy.png",
     "description": "Building robust and scalable server-side solutions that power our applications with efficiency.",
     "social": {
@@ -36,9 +48,9 @@
     }
   },
   {
-    "id": 4,
+    "id": 5,
     "name": "Suteekshna Mishra",
-    "designation": "Yearbook Coordinator",
+    "designation": "Head of TEAm Affairs",
     "image": "team/ex-gen-secy.jpg",
     "description": "Creating intuitive and engaging user experiences through thoughtful design and creative problem-solving.",
     "social": {
@@ -47,9 +59,9 @@
     }
   },
   {
-    "id": 5,
+    "id": 6,
     "name": "Om Gupta",
-    "designation": "ex-MAPRC Secretary",
+    "designation": "Meme Minister",
     "image": "team/bhen ka lawda.jpg",
     "description": "Managing our data infrastructure with precision and ensuring optimal performance across all systems.",
     "social": {
@@ -59,9 +71,9 @@
     }
   },
   {
-    "id": 6,
+    "id": 7,
     "name": "Kandarp Jani",
-    "designation": "Member",
+    "designation": "Vibe Curator",
     "image": "team/bhai muh me lele.jpg",
     "description": "Developing compelling content strategies that effectively communicate our message and engage our audience.",
     "social": {
@@ -70,9 +82,9 @@
     }
   },
   {
-    "id": 7,
+    "id": 8,
     "name": "Pranjal Gaur",
-    "designation": "Member",
+    "designation": "Vibe Curator",
     "image": "team/thandi raand.jpg",
     "description": "Coordinating team efforts and ensuring projects are delivered on time, within scope, and with high quality.",
     "social": {
@@ -81,9 +93,9 @@
     }
   },
   {
-    "id": 8,
+    "id": 9,
     "name": "Shaury Patel",
-    "designation": "Member",
+    "designation": "Vibe Curator",
     "image": "team/Shaury patel.jpg",
     "description": "Ensuring the smooth operation of our systems and providing exceptional support to our users.",
     "social": {

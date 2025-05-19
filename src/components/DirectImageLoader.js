@@ -6,9 +6,29 @@ import { isGoogleDriveUrl, getGoogleDriveDirectUrl, extractGoogleDriveFileId } f
 // This helps us track which Google Drive files have been deleted
 const deletedFilesCache = window.deletedFilesCache || new Set();
 
+// Check if we're on a mobile device - only used for mobile-specific fixes
+const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+// If on mobile, clear the cache to prevent persistence issues
+if (isMobileDevice && deletedFilesCache.size > 0) {
+  console.log('Mobile device detected in DirectImageLoader, clearing deleted files cache');
+  deletedFilesCache.clear();
+
+  // Update the global cache
+  if (window.deletedFilesCache) {
+    window.deletedFilesCache = new Set();
+  }
+}
+
 // Helper function to save the cache to localStorage
 const saveDeletedFilesCache = () => {
   try {
+    // Skip saving on mobile devices
+    if (isMobileDevice) {
+      console.log('Mobile device detected, skipping saving deleted files cache');
+      return;
+    }
+
     const idsArray = Array.from(deletedFilesCache);
     localStorage.setItem('deletedFilesCache', JSON.stringify(idsArray));
     console.log(`Saved ${idsArray.length} deleted file IDs to localStorage from DirectImageLoader`);
@@ -131,6 +151,23 @@ const DirectImageLoader = ({
     if (!attemptedFallback) {
       setAttemptedFallback(true);
 
+      // For mobile devices only, try the API endpoint directly with a fresh timestamp
+      if (isMobileDevice && (src.includes('/api/profiles/') || src.includes('/api/memories/'))) {
+        // Extract the memory ID from the URL if possible
+        const memoryIdMatch = src.match(/\/memories\/(\d+)\/image/);
+        const profileIdMatch = src.match(/\/profiles\/(\d+)\/image/);
+        const id = memoryIdMatch ? memoryIdMatch[1] : (profileIdMatch ? profileIdMatch[1] : null);
+
+        if (id) {
+          const timestamp = new Date().getTime();
+          const apiBase = memoryIdMatch ? '/api/memories/' : '/api/profiles/';
+          const directApiUrl = `${apiBase}${id}/image?t=${timestamp}`;
+          console.log(`Mobile device: trying direct API endpoint: ${directApiUrl}`);
+          setImageSrc(directApiUrl);
+          return;
+        }
+      }
+
       // Strategy 1: If this is a Google Drive URL that failed, try alternative formats
       if (isGoogleDriveUrl(src)) {
         console.log('Google Drive URL failed, attempting alternative formats');
@@ -139,7 +176,8 @@ const DirectImageLoader = ({
         const fileId = extractGoogleDriveFileId(src);
         if (fileId) {
           // If this file ID is already in the deleted files cache, use fallback immediately
-          if (deletedFilesCache.has(fileId)) {
+          // But only if we're not on mobile (to prevent mobile-specific issues)
+          if (!isMobileDevice && deletedFilesCache.has(fileId)) {
             console.warn(`Using fallback for known deleted Google Drive file: ${fileId}`);
             setError(true);
             setImageSrc(fallbackImage);
@@ -173,9 +211,14 @@ const DirectImageLoader = ({
           }
           else {
             // If all Google Drive formats failed, try the API endpoint with a fresh timestamp
+            // Extract the memory ID from the URL if possible
+            const memoryIdMatch = src.match(/\/memories\/(\d+)\/image/);
+            const profileIdMatch = src.match(/\/profiles\/(\d+)\/image/);
+            const id = memoryIdMatch ? memoryIdMatch[1] : (profileIdMatch ? profileIdMatch[1] : fileId);
+
             const apiBase = type === 'memory' ? '/api/memories/' : '/api/profiles/';
             const timestamp = new Date().getTime();
-            const fallbackUrl = `${apiBase}${fileId}/image?t=${timestamp}`;
+            const fallbackUrl = `${apiBase}${id}/image?t=${timestamp}`;
             console.log(`Using API fallback URL: ${fallbackUrl}`);
             setImageSrc(fallbackUrl);
             return;
@@ -198,7 +241,8 @@ const DirectImageLoader = ({
     console.log(`All fallbacks failed, using placeholder image for ${type}`);
 
     // If this is a Google Drive URL that failed, add it to the deleted files cache
-    if (isGoogleDriveUrl(src)) {
+    // But only if we're not on mobile (to prevent mobile-specific issues)
+    if (!isMobileDevice && isGoogleDriveUrl(src)) {
       const fileId = extractGoogleDriveFileId(src);
       if (fileId) {
         console.warn(`Adding file ID to deleted files cache: ${fileId}`);

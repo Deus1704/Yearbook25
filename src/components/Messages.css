@@ -63,11 +63,35 @@ body {
 }
 
 /* Wall of Memories Styles */
+.testimonial-wall-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 30px;
+  transition: opacity 0.5s ease;
+}
+
+.testimonial-wall-wrapper.loading {
+  opacity: 0.7;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  z-index: 10;
+}
+
 .testimonial-wall {
   position: relative;
   width: 100%;
   overflow: hidden;
-  margin-bottom: 30px;
   padding: 20px 0;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -82,9 +106,14 @@ body {
   display: flex;
   width: max-content;
   animation: scroll 60s linear infinite;
+  animation-delay: -10s; /* Start animation immediately from a visible position */
   will-change: transform; /* Optimize for animation performance */
   transform: translateZ(0); /* Force GPU acceleration */
   padding: 10px 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  /* Ensure content is visible immediately */
+  animation-fill-mode: backwards;
 }
 
 .testimonial-track:hover {
@@ -93,10 +122,10 @@ body {
 
 @keyframes scroll {
   0% {
-    transform: translateX(100%);
+    transform: translateX(10%);  /* Start with content already visible */
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(-110%);  /* End with different content visible */
   }
 }
 
@@ -106,6 +135,8 @@ body {
   position: relative;
   flex: 1;
   align-items: center;
+  min-height: 210px; /* Ensure consistent height for all rows */
+  margin: 5px 0; /* Add some spacing between rows */
 }
 
 /* Add subtle gradient overlays to indicate infinite scroll */
@@ -415,6 +446,10 @@ body {
     min-height: 65vh;
   }
 
+  .testimonial-row {
+    min-height: 180px; /* Slightly smaller height for mobile */
+  }
+
   .add-message-btn {
     width: 50px;
     height: 50px;
@@ -428,12 +463,27 @@ body {
     font-family: 'Poppins', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 
+  /* Keep the same keyframes for mobile to ensure consistent animation */
   @keyframes scroll {
     0% {
-      transform: translateX(100%);
+      transform: translateX(10%);  /* Start with content already visible */
     }
     100% {
-      transform: translateX(-100%);
+      transform: translateX(-110%);  /* End with different content visible */
     }
+  }
+
+  /* Adjust animation speeds for mobile to match desktop speeds */
+  .testimonial-track {
+    animation-duration: 60s !important; /* Default speed */
+  }
+
+  /* Target specific rows by their position */
+  .testimonial-row:nth-child(2) .testimonial-track {
+    animation-duration: 75s !important; /* Medium speed for middle row */
+  }
+
+  .testimonial-row:nth-child(3) .testimonial-track {
+    animation-duration: 90s !important; /* Slow speed for bottom row */
   }
 }

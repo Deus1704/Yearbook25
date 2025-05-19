@@ -3,6 +3,9 @@ import { getGoogleDriveDirectUrl, isGoogleDriveUrl, extractGoogleDriveFileId } f
 import { profilePlaceholder, memoryPlaceholder } from '../assets/profile-placeholder';
 import { markMemoryImageAsDeleted, markProfileAsDeleted } from '../services/api';
 
+// Check if we're on a mobile device - only used for mobile-specific fixes
+const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 // Create a cache to track deleted Google Drive files to avoid repeated attempts
 // Initialize from localStorage if available to persist across page reloads
 const initializeDeletedFilesCache = () => {
@@ -17,6 +20,13 @@ const initializeDeletedFilesCache = () => {
     if (cachedIds) {
       const parsedIds = JSON.parse(cachedIds);
       console.log(`Loaded ${parsedIds.length} deleted file IDs from localStorage`);
+
+      // IMPORTANT FIX: Clear the cache if we're on mobile to prevent persistence issues
+      if (isMobileDevice) {
+        console.log('Mobile device detected, clearing deleted files cache to fix mobile view issues');
+        return new Set();
+      }
+
       return new Set(parsedIds);
     }
   } catch (error) {
@@ -35,6 +45,12 @@ window.deletedFilesCache = deletedFilesCache;
 // Helper function to save the cache to localStorage
 const saveDeletedFilesCache = () => {
   try {
+    // IMPORTANT FIX: Don't save the cache on mobile devices
+    if (isMobileDevice) {
+      console.log('Mobile device detected, skipping saving deleted files cache');
+      return;
+    }
+
     const idsArray = Array.from(deletedFilesCache);
     localStorage.setItem('deletedFilesCache', JSON.stringify(idsArray));
     console.log(`Saved ${idsArray.length} deleted file IDs to localStorage`);
@@ -197,7 +213,9 @@ const GoogleDriveImage = ({
 
       if (fileId) {
         // If we've tried all formats and still failed, add to deleted files cache
-        if (attemptedFormats.includes('drive-usercontent') &&
+        // But only if we're not on mobile (to prevent mobile-specific issues)
+        if (!isMobileDevice &&
+            attemptedFormats.includes('drive-usercontent') &&
             attemptedFormats.includes('uc-export-view') &&
             attemptedFormats.includes('uc-export-download')) {
           console.warn(`Adding file ID to deleted files cache: ${fileId}`);
@@ -210,7 +228,14 @@ const GoogleDriveImage = ({
         let nextUrl = '';
 
         // Try different URL formats in sequence
-        if (!attemptedFormats.includes('drive-usercontent')) {
+        // For mobile devices, we'll try more formats before giving up
+        if (isMobileDevice && !attemptedFormats.includes('lh3-direct')) {
+          // Try the most direct format first for mobile
+          nextUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+          setAttemptedFormats([...attemptedFormats, 'lh3-direct']);
+          console.log(`Mobile device: Trying direct lh3 format: ${nextUrl}`);
+        }
+        else if (!attemptedFormats.includes('drive-usercontent')) {
           nextUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=view`;
           setAttemptedFormats([...attemptedFormats, 'drive-usercontent']);
           console.log(`Trying alternative format 1: ${nextUrl}`);
@@ -225,17 +250,23 @@ const GoogleDriveImage = ({
           setAttemptedFormats([...attemptedFormats, 'uc-export-download']);
           console.log(`Trying alternative format 3: ${nextUrl}`);
         }
-        // Skip the API endpoint for problematic IDs
-        else if (!attemptedFormats.includes('api-endpoint') && fileId !== '1xIPRNwC7VIfbb2Nj04SXIG9_MWDfVNL_') {
-          // Try the API endpoint as a last resort
+        // For mobile devices only, try the API endpoint as a last resort
+        else if (isMobileDevice && !attemptedFormats.includes('api-endpoint') && fileId !== '1xIPRNwC7VIfbb2Nj04SXIG9_MWDfVNL_') {
           const apiBase = type === 'memory' ? '/api/memories/' : '/api/profiles/';
-          nextUrl = `${apiBase}${fileId}/image?t=${new Date().getTime()}`;
+          const timestamp = new Date().getTime();
+          nextUrl = `${apiBase}${imageId}/image?t=${timestamp}`;
           setAttemptedFormats([...attemptedFormats, 'api-endpoint']);
-          console.log(`Trying API endpoint as fallback: ${nextUrl}`);
+          console.log(`Mobile device: Trying API endpoint as fallback: ${nextUrl}`);
         }
 
         if (nextUrl) {
-          setImageSrc(nextUrl);
+          // Add cache-busting parameter to prevent stale images
+          const timestamp = new Date().getTime();
+          const urlWithCache = nextUrl.includes('?')
+            ? `${nextUrl}&t=${timestamp}`
+            : `${nextUrl}?t=${timestamp}`;
+
+          setImageSrc(urlWithCache);
           return; // Don't set error yet, we're trying another format
         }
       }
@@ -247,13 +278,14 @@ const GoogleDriveImage = ({
     }
 
     // If this is a Google Drive URL that failed, add it to the deleted files cache
-    if (isGoogleDriveUrl(src)) {
+    // But only if we're not on mobile (to prevent mobile-specific issues)
+    if (!isMobileDevice && isGoogleDriveUrl(src)) {
       const fileId = extractGoogleDriveFileId(src);
       if (fileId) {
         console.warn(`Adding file ID to deleted files cache: ${fileId}`);
         deletedFilesCache.add(fileId);
 
-        // Save the updated cache to localStorage
+        // Save the updated cache to localStorage (this is already skipped on mobile)
         saveDeletedFilesCache();
 
         // Report to backend if not already reported
@@ -261,6 +293,16 @@ const GoogleDriveImage = ({
           reportDeletedImage(fileId);
         }
       }
+    }
+
+    // If we're on mobile, try one more time with the API endpoint directly
+    if (isMobileDevice && type === 'memory' && imageId && !attemptedFormats.includes('direct-api-endpoint')) {
+      const timestamp = new Date().getTime();
+      const apiUrl = `/api/memories/${imageId}/image?t=${timestamp}`;
+      console.log(`Mobile device detected, trying direct API endpoint: ${apiUrl}`);
+      setAttemptedFormats([...attemptedFormats, 'direct-api-endpoint']);
+      setImageSrc(apiUrl);
+      return;
     }
 
     setError(true);
