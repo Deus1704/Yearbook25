@@ -295,6 +295,9 @@ const Gallery = () => {
         name: memory.name || 'Memory Image',
         type: 'memory',
         status: memory.status,
+        // Pass the original image_url and image_id for better handling in mobile
+        image_url: memory.image_url,
+        image_id: memory.image_id,
         // Use the direct URL from Google Drive if available, otherwise use the API endpoint
         // Add timestamp to prevent caching issues
         imageUrl: memory.image_url || memory.imageUrl || getMemoryImageUrl(memory.id)

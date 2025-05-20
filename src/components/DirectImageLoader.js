@@ -20,6 +20,22 @@ if (isMobileDevice && deletedFilesCache.size > 0) {
   }
 }
 
+// Helper function to get an optimized Google Drive URL for mobile
+const getOptimizedGoogleDriveUrl = (url) => {
+  if (!url || typeof url !== 'string') return url;
+
+  // If it's a Google Drive URL, try to optimize it
+  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+    const fileIdMatch = url.match(/id=([^&]+)/) || url.match(/\/d\/([^/]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+      const fileId = fileIdMatch[1];
+      // Use the lh3.googleusercontent.com format which often works better on mobile
+      return `https://lh3.googleusercontent.com/d/${fileId}`;
+    }
+  }
+  return url;
+};
+
 // Helper function to save the cache to localStorage
 const saveDeletedFilesCache = () => {
   try {
@@ -104,20 +120,44 @@ const DirectImageLoader = ({
 
     // Check if it's a Google Drive URL and convert it if needed
     if (isGoogleDriveUrl(src)) {
-      const directUrl = getGoogleDriveDirectUrl(src);
-      console.log(`Converting Google Drive URL: ${src} to direct URL: ${directUrl}`);
+      // For mobile devices, use the optimized Google Drive URL format
+      if (isMobileDevice) {
+        const optimizedUrl = getOptimizedGoogleDriveUrl(src);
+        console.log(`Mobile device: using optimized Google Drive URL: ${optimizedUrl}`);
+
+        // Add cache-busting parameter
+        const urlWithCache = optimizedUrl.includes('?')
+          ? `${optimizedUrl}&t=${timestamp}`
+          : `${optimizedUrl}?t=${timestamp}`;
+
+        setImageSrc(urlWithCache);
+      } else {
+        // For desktop, use the standard direct URL
+        const directUrl = getGoogleDriveDirectUrl(src);
+        console.log(`Converting Google Drive URL: ${src} to direct URL: ${directUrl}`);
+
+        // Add cache-busting parameter
+        const urlWithCache = directUrl.includes('?')
+          ? `${directUrl}&t=${timestamp}`
+          : `${directUrl}?t=${timestamp}`;
+
+        setImageSrc(urlWithCache);
+      }
+    } else if (src.includes('/api/profiles/') || src.includes('/api/memories/')) {
+      // Handle API URLs - ensure they're absolute URLs
+      let apiUrl = src;
+
+      // If it's a relative URL, convert to absolute
+      if (src.startsWith('/api/')) {
+        const API_URL = 'https://yearbook25-xb9a.onrender.com/api';
+        // Remove the leading /api and replace with the full API_URL
+        apiUrl = API_URL + src.substring(4);
+      }
 
       // Add cache-busting parameter
-      const urlWithCache = directUrl.includes('?')
-        ? `${directUrl}&t=${timestamp}`
-        : `${directUrl}?t=${timestamp}`;
-
-      setImageSrc(urlWithCache);
-    } else if (src.includes('/api/profiles/') || src.includes('/api/memories/')) {
-      // Add cache-busting parameter to API URLs
-      const urlWithCache = src.includes('?')
-        ? `${src}&t=${timestamp}`
-        : `${src}?t=${timestamp}`;
+      const urlWithCache = apiUrl.includes('?')
+        ? `${apiUrl}&t=${timestamp}`
+        : `${apiUrl}?t=${timestamp}`;
       console.log(`Adding cache-busting to API URL: ${urlWithCache}`);
       setImageSrc(urlWithCache);
     } else {
@@ -151,20 +191,34 @@ const DirectImageLoader = ({
     if (!attemptedFallback) {
       setAttemptedFallback(true);
 
-      // For mobile devices only, try the API endpoint directly with a fresh timestamp
-      if (isMobileDevice && (src.includes('/api/profiles/') || src.includes('/api/memories/'))) {
-        // Extract the memory ID from the URL if possible
-        const memoryIdMatch = src.match(/\/memories\/(\d+)\/image/);
-        const profileIdMatch = src.match(/\/profiles\/(\d+)\/image/);
-        const id = memoryIdMatch ? memoryIdMatch[1] : (profileIdMatch ? profileIdMatch[1] : null);
-
-        if (id) {
-          const timestamp = new Date().getTime();
-          const apiBase = memoryIdMatch ? '/api/memories/' : '/api/profiles/';
-          const directApiUrl = `${apiBase}${id}/image?t=${timestamp}`;
-          console.log(`Mobile device: trying direct API endpoint: ${directApiUrl}`);
-          setImageSrc(directApiUrl);
+      // For mobile devices, try different strategies
+      if (isMobileDevice) {
+        // First, check if it's a Google Drive URL that failed
+        if (isGoogleDriveUrl(src)) {
+          // Try the optimized Google Drive URL format
+          const optimizedUrl = getOptimizedGoogleDriveUrl(src);
+          console.log(`Mobile device: trying optimized Google Drive URL: ${optimizedUrl}`);
+          setImageSrc(optimizedUrl);
           return;
+        }
+
+        // If it's an API endpoint, try with a direct approach
+        if (src.includes('/api/profiles/') || src.includes('/api/memories/')) {
+          // Extract the memory ID from the URL if possible
+          const memoryIdMatch = src.match(/\/memories\/(\d+)\/image/);
+          const profileIdMatch = src.match(/\/profiles\/(\d+)\/image/);
+          const id = memoryIdMatch ? memoryIdMatch[1] : (profileIdMatch ? profileIdMatch[1] : null);
+
+          if (id) {
+            // Import API_URL from services/api.js if needed
+            const API_URL = 'https://yearbook25-xb9a.onrender.com/api';
+            const timestamp = new Date().getTime();
+            const apiBase = memoryIdMatch ? `${API_URL}/memories/` : `${API_URL}/profiles/`;
+            const directApiUrl = `${apiBase}${id}/image?t=${timestamp}`;
+            console.log(`Mobile device: trying absolute API endpoint: ${directApiUrl}`);
+            setImageSrc(directApiUrl);
+            return;
+          }
         }
       }
 
@@ -216,10 +270,12 @@ const DirectImageLoader = ({
             const profileIdMatch = src.match(/\/profiles\/(\d+)\/image/);
             const id = memoryIdMatch ? memoryIdMatch[1] : (profileIdMatch ? profileIdMatch[1] : fileId);
 
-            const apiBase = type === 'memory' ? '/api/memories/' : '/api/profiles/';
+            // Use absolute URL for API endpoints
+            const API_URL = 'https://yearbook25-xb9a.onrender.com/api';
+            const apiBase = type === 'memory' ? `${API_URL}/memories/` : `${API_URL}/profiles/`;
             const timestamp = new Date().getTime();
             const fallbackUrl = `${apiBase}${id}/image?t=${timestamp}`;
-            console.log(`Using API fallback URL: ${fallbackUrl}`);
+            console.log(`Using absolute API fallback URL: ${fallbackUrl}`);
             setImageSrc(fallbackUrl);
             return;
           }
@@ -229,7 +285,17 @@ const DirectImageLoader = ({
       else if ((src.includes('/api/profiles/') || src.includes('/api/memories/')) && src.includes('/image')) {
         console.log('API endpoint failed, trying with new cache-busting parameter');
         const timestamp = new Date().getTime();
-        const baseUrl = src.split('?')[0];
+
+        // Extract the base URL and ensure it's absolute
+        let baseUrl = src.split('?')[0];
+
+        // If it's a relative URL, convert to absolute
+        if (baseUrl.startsWith('/api/')) {
+          const API_URL = 'https://yearbook25-xb9a.onrender.com/api';
+          // Remove the leading /api and replace with the full API_URL
+          baseUrl = API_URL + baseUrl.substring(4);
+        }
+
         const fallbackUrl = `${baseUrl}?t=${timestamp}`;
         console.log(`Using new cache-busting URL: ${fallbackUrl}`);
         setImageSrc(fallbackUrl);

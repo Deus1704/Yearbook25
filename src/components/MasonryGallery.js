@@ -7,6 +7,28 @@ import { getMemoryImageUrl } from '../services/api';
 import { memoryPlaceholder } from '../assets/profile-placeholder';
 
 /**
+ * Optimizes Google Drive URLs for direct access, especially on mobile
+ * This function tries different formats that might work better on mobile devices
+ *
+ * @param {string} url - The original Google Drive URL
+ * @returns {string} - An optimized URL that might work better on mobile
+ */
+const getOptimizedGoogleDriveUrl = (url) => {
+  if (!url || !isGoogleDriveUrl(url)) {
+    return url;
+  }
+
+  // Extract the file ID
+  const fileId = extractGoogleDriveFileId(url);
+  if (!fileId) {
+    return url;
+  }
+
+  // For mobile, the lh3.googleusercontent.com format often works best
+  return `https://lh3.googleusercontent.com/d/${fileId}`;
+};
+
+/**
  * MasonryGallery component that displays images in a masonry layout
  * Enhanced with better mobile support and error handling
  *
@@ -111,7 +133,7 @@ const MasonryGallery = ({ images }) => {
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     // If we're on mobile and have images but some might be failing
-    if (isMobileDevice && images && images.length > 0 && retryCount < 2) {
+    if (isMobileDevice && images && images.length > 0 && retryCount < 3) {
       // Set a timer to retry loading images
       const timer = setTimeout(() => {
         console.log(`Mobile view: Retrying image load attempt ${retryCount + 1}`);
@@ -122,7 +144,14 @@ const MasonryGallery = ({ images }) => {
           window.deletedFilesCache = new Set();
           setDeletedFilesCache(new Set());
         }
-      }, 3000); // Wait 3 seconds before retry
+
+        // On the second retry, try to force reload the images with a different approach
+        if (retryCount === 1) {
+          console.log('Mobile view: Second retry - using optimized Google Drive URLs');
+          // The component will re-render with the updated retryCount
+          // and use the optimized Google Drive URLs
+        }
+      }, 2000 + (retryCount * 1000)); // Increasing delay for each retry
 
       return () => clearTimeout(timer);
     }
@@ -142,11 +171,24 @@ const MasonryGallery = ({ images }) => {
     // Check if we're on a mobile device
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // For mobile devices only, prefer the API endpoint directly to avoid CORS issues
+    // For mobile devices, try to use the direct Google Drive URL if available
     if (isMobileDevice && image.id) {
-      const timestamp = new Date().getTime();
-      imageSrc = `/api/memories/${image.id}/image?t=${timestamp}`;
-      console.log(`Mobile view: Using direct API endpoint for image ${image.id}`);
+      // If we have a direct Google Drive URL, use it directly
+      if (image.image_url && isGoogleDriveUrl(image.image_url)) {
+        // Use the direct Google Drive URL
+        imageSrc = image.image_url;
+        console.log(`Mobile view: Using direct Google Drive URL for image ${image.id}`);
+      }
+      // If we have a direct image_url that's not from Google Drive, use it
+      else if (image.image_url) {
+        imageSrc = image.image_url;
+        console.log(`Mobile view: Using direct image URL for image ${image.id}: ${imageSrc}`);
+      }
+      // Otherwise, use the API endpoint as a last resort
+      else {
+        imageSrc = getMemoryImageUrl(image.id);
+        console.log(`Mobile view: Using API endpoint for image ${image.id}: ${imageSrc}`);
+      }
     } else if (!imageSrc && image.id) {
       imageSrc = getMemoryImageUrl(image.id);
     }
@@ -183,6 +225,7 @@ const MasonryGallery = ({ images }) => {
     return (
       <div className="masonry-item" key={itemKey}>
         {isGoogleDrive && !isMobileDevice ? (
+          // For desktop, use GoogleDriveImage component for Google Drive URLs
           <GoogleDriveImage
             src={urlWithCache}
             alt={image.name || 'Memory image'}
@@ -191,7 +234,19 @@ const MasonryGallery = ({ images }) => {
             imageId={image.id} // Add imageId for reporting deleted images
             fallbackSrc={memoryPlaceholder} // Always use placeholder as fallback
           />
+        ) : isGoogleDrive && isMobileDevice ? (
+          // For mobile with Google Drive URLs, use a special approach
+          <img
+            src={getOptimizedGoogleDriveUrl(imageSrc)}
+            alt={image.name || 'Memory image'}
+            className="masonry-image"
+            onError={(e) => {
+              console.log(`Mobile: Google Drive image failed to load, using placeholder`);
+              e.target.src = memoryPlaceholder;
+            }}
+          />
         ) : (
+          // For all other cases, use DirectImageLoader
           <DirectImageLoader
             src={urlWithCache}
             alt={image.name || 'Memory image'}
