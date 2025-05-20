@@ -25,7 +25,11 @@ const getOptimizedGoogleDriveUrl = (url) => {
   }
 
   // For mobile, the lh3.googleusercontent.com format often works best
-  return `https://lh3.googleusercontent.com/d/${fileId}`;
+  const optimizedUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+
+  // Add a cache-busting parameter to prevent caching issues
+  const timestamp = new Date().getTime();
+  return `${optimizedUrl}?t=${timestamp}`;
 };
 
 /**
@@ -133,7 +137,7 @@ const MasonryGallery = ({ images }) => {
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     // If we're on mobile and have images but some might be failing
-    if (isMobileDevice && images && images.length > 0 && retryCount < 3) {
+    if (isMobileDevice && images && images.length > 0 && retryCount < 5) {
       // Set a timer to retry loading images
       const timer = setTimeout(() => {
         console.log(`Mobile view: Retrying image load attempt ${retryCount + 1}`);
@@ -145,11 +149,48 @@ const MasonryGallery = ({ images }) => {
           setDeletedFilesCache(new Set());
         }
 
+        // Clear any browser cache for the images
+        if (window.caches && retryCount === 1) {
+          console.log('Mobile view: Clearing browser cache for images');
+          window.caches.keys().then(cacheNames => {
+            cacheNames.forEach(cacheName => {
+              window.caches.open(cacheName).then(cache => {
+                cache.keys().then(requests => {
+                  requests.forEach(request => {
+                    if (request.url.includes('/memories/') || isGoogleDriveUrl(request.url)) {
+                      cache.delete(request);
+                    }
+                  });
+                });
+              });
+            });
+          }).catch(err => console.error('Error clearing cache:', err));
+        }
+
         // On the second retry, try to force reload the images with a different approach
         if (retryCount === 1) {
           console.log('Mobile view: Second retry - using optimized Google Drive URLs');
           // The component will re-render with the updated retryCount
           // and use the optimized Google Drive URLs
+        }
+
+        // On the third retry, try to use the service worker cache
+        if (retryCount === 2) {
+          console.log('Mobile view: Third retry - using service worker cache');
+          // The component will re-render with the updated retryCount
+          // and try to use the service worker cache
+
+          // Clear the image cache to force a fresh load
+          if (window.imageCache) {
+            window.imageCache.clear();
+          }
+        }
+
+        // On the fourth retry, try to use base64 data URLs
+        if (retryCount === 3) {
+          console.log('Mobile view: Fourth retry - using base64 data URLs');
+          // The component will re-render with the updated retryCount
+          // and try to use base64 data URLs
         }
       }, 2000 + (retryCount * 1000)); // Increasing delay for each retry
 

@@ -90,6 +90,13 @@ const DirectImageLoader = ({
 
     console.log(`DirectImageLoader loading image from: ${src}, type: ${type}`);
 
+    // Check if the image is in the global cache
+    if (window.imageCache && window.imageCache.has(src)) {
+      console.log(`Using cached image for: ${src}`);
+      setImageSrc(window.imageCache.get(src));
+      return;
+    }
+
     // Check if it's a Google Drive URL and if it's in the deleted files cache
     if (isGoogleDriveUrl(src)) {
       const fileId = extractGoogleDriveFileId(src);
@@ -331,6 +338,12 @@ const DirectImageLoader = ({
   };
 
   const handleLoad = (e) => {
+    // Cache the successful image load in the global cache
+    if (window.imageCache && src && imageSrc) {
+      window.imageCache.set(src, imageSrc);
+      console.log(`Cached image for: ${src}`);
+    }
+
     if (onLoad) {
       onLoad(e);
     }
