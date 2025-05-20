@@ -60,9 +60,44 @@ router.get('/:id/image', async (req, res) => {
       return res.status(404).json({ message: 'Memory not found' });
     }
 
-    // If we have a direct URL to the image, redirect to it
+    // If we have a direct URL to the image, fetch it and serve it directly instead of redirecting
+    // This avoids CORS issues when the client is on a different domain
     if (memory.imageUrl) {
-      return res.redirect(memory.imageUrl);
+      try {
+        console.log(`Fetching image from URL: ${memory.imageUrl} instead of redirecting`);
+
+        // Use axios or another HTTP client to fetch the image
+        const axios = require('axios');
+        const response = await axios.get(memory.imageUrl, {
+          responseType: 'arraybuffer',
+          // Add a timeout to avoid hanging requests
+          timeout: 10000,
+          // Don't follow redirects to avoid CORS issues
+          maxRedirects: 0,
+          headers: {
+            // Add headers to avoid CORS issues
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+
+        // Set CORS headers to allow requests from any origin
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+        // Serve the image directly
+        res.writeHead(200, {
+          'Content-Type': response.headers['content-type'] || 'image/jpeg',
+          'Content-Length': response.data.length,
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+        });
+        res.end(response.data);
+        return;
+      } catch (fetchError) {
+        console.error('Error fetching image from URL:', fetchError);
+        console.log('Falling back to Google Drive or database image');
+        // Fall through to try other methods
+      }
     }
 
     // If we have a Google Drive image ID, try to fetch it
@@ -70,9 +105,15 @@ router.get('/:id/image', async (req, res) => {
       try {
         const file = await fileStorage.getMemoryImage(memory.imageId);
 
+        // Set CORS headers to allow requests from any origin
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type');
+
         res.writeHead(200, {
           'Content-Type': file.metadata.mimeType || 'image/jpeg',
-          'Content-Length': file.content.length
+          'Content-Length': file.content.length,
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
         });
         res.end(file.content);
         return;
@@ -85,9 +126,15 @@ router.get('/:id/image', async (req, res) => {
 
     // If we have an image stored directly in the database, use that
     if (memory.image) {
+      // Set CORS headers to allow requests from any origin
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type');
+
       res.writeHead(200, {
         'Content-Type': memory.contentType || 'image/jpeg',
-        'Content-Length': memory.image.length
+        'Content-Length': memory.image.length,
+        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
       });
       res.end(memory.image);
       return;

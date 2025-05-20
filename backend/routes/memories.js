@@ -110,12 +110,15 @@ router.get('/:id/image', async (req, res) => {
         return res.status(404).json({ message: 'Image no longer exists in Google Drive', status: 'deleted' });
       }
 
+      // Set CORS headers to allow requests from any origin
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type');
+
       res.writeHead(200, {
         'Content-Type': file.metadata.mimeType || 'image/jpeg',
         'Content-Length': file.content.length,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
       });
       res.end(file.content);
     } catch (driveError) {
