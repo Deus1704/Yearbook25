@@ -405,6 +405,21 @@ const Gallery = () => {
       console.log(`Screen size changed: ${width}px, isMobile: ${mobile}`);
     };
 
+    // Check if this is the first load of the gallery page in this session
+    const hasReloadedGallery = sessionStorage.getItem('hasReloadedGallery');
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // If on mobile and hasn't reloaded yet, reload the page once
+    if (isMobileDevice && !hasReloadedGallery) {
+      console.log('First visit to gallery on mobile, reloading page to ensure images load correctly');
+      sessionStorage.setItem('hasReloadedGallery', 'true');
+      // Use a short timeout to ensure the session storage is set before reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      return;
+    }
+
     checkScreenSize();
     fetchData();
 
